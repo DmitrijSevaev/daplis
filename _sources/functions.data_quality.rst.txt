@@ -1,0 +1,7 @@
+functions.data\_quality module
+==============================
+
+.. automodule:: functions.data_quality
+   :members:
+   :undoc-members:
+   :show-inheritance:

@@ -1,0 +1,1116 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>daplis.functions.sensor_plot &mdash; Data Analysis Package for LinoSPAD2 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=8d563738"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Data Analysis Package for LinoSPAD2
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation and dependencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../daplis.html">daplis functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contribute.html">How to contribute</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../license.html">License and contact info</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../acknowledgement.html">Acknowledgement</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Data Analysis Package for LinoSPAD2</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">daplis.functions.sensor_plot</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for daplis.functions.sensor_plot</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Module with scripts for plotting the LinoSPAD2 sensor population.</span>
+
+<span class="sd">This script utilizes an unpacking module used specifically for the</span>
+<span class="sd">LinoSPAD2 data output.</span>
+
+<span class="sd">This file can also be imported as a module and contains the following</span>
+<span class="sd">functions:</span>
+
+<span class="sd">    * collect_data_and_apply_mask - Collect data from files and apply</span>
+<span class="sd">    mask to the valid pixel count.</span>
+
+<span class="sd">    * plot_single_pix_hist - Plot a histogram for each pixel in the given</span>
+<span class="sd">    range.</span>
+
+<span class="sd">    * plot_sensor_population - Plot number of timestamps in each pixel</span>
+<span class="sd">    for all data files.</span>
+
+<span class="sd">    * plot_sensor_population_spdc - Plot sensor population for SPDC data.</span>
+
+<span class="sd">    * plot_sensor_population_full_sensor - Plot the number of timestamps</span>
+<span class="sd">    in each pixel for all data files from two different FPGAs/sensor</span>
+<span class="sd">    halves.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">glob</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">pickle</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+<span class="kn">from</span> <span class="nn">scipy.optimize</span> <span class="kn">import</span> <span class="n">curve_fit</span>
+<span class="kn">from</span> <span class="nn">scipy.signal</span> <span class="kn">import</span> <span class="n">find_peaks</span>
+<span class="kn">from</span> <span class="nn">tqdm</span> <span class="kn">import</span> <span class="n">tqdm</span>
+
+<span class="kn">from</span> <span class="nn">daplis.functions</span> <span class="kn">import</span> <span class="n">unpack</span> <span class="k">as</span> <span class="n">f_up</span>
+<span class="kn">from</span> <span class="nn">daplis.functions</span> <span class="kn">import</span> <span class="n">utils</span>
+
+
+<div class="viewcode-block" id="collect_data_and_apply_mask">
+<a class="viewcode-back" href="../../../daplis.functions.plot_tmsp.html#daplis.functions.sensor_plot.collect_data_and_apply_mask">[docs]</a>
+<span class="k">def</span> <span class="nf">collect_data_and_apply_mask</span><span class="p">(</span>
+    <span class="n">files</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">daughterboard_number</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">motherboard_number</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">firmware_version</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">timestamps</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">app_mask</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">absolute_timestamps</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">save_to_file</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">correct_pix_address</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">calculate_rates</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Collect data from files and apply mask to the valid pixel count.</span>
+
+<span class="sd">    Unpacks data and returns the number of timestamps in each pixel.</span>
+<span class="sd">    This function introduces modularity to the whole module and is</span>
+<span class="sd">    called multiple times here.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    files : List[str]</span>
+<span class="sd">        List of data file paths.</span>
+<span class="sd">    daughterboard_number : str</span>
+<span class="sd">        The LinoSPAD2 daughterboard number.</span>
+<span class="sd">    motherboard_number : str</span>
+<span class="sd">        The LinoSPAD2 motherboard number, including the &quot;#&quot;.</span>
+<span class="sd">    firmware_version : str</span>
+<span class="sd">        LinoSPAD2 firmware version.</span>
+<span class="sd">    timestamps : int</span>
+<span class="sd">        Number of timestamps per pixel per acquisition cycle.</span>
+<span class="sd">    app_mask : bool, optional</span>
+<span class="sd">        Switch for applying the mask on warm/hot pixels. Default is True.</span>
+<span class="sd">    absolute_timestamps : bool, optional</span>
+<span class="sd">        Indicator for data files with absolute timestamps. Default is</span>
+<span class="sd">        False.</span>
+<span class="sd">    correct_pix_address : bool, optional</span>
+<span class="sd">        Check for correcting the pixel addresing. THe default is False.</span>
+<span class="sd">    calculate_rates : bool, optional</span>
+<span class="sd">        Switch for calculating the photon rate for each pixel. The</span>
+<span class="sd">        default is &#39;False&#39;.</span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    np.ndarray</span>
+<span class="sd">        Array with the number of timestamps per pixel.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Define matrix of pixel coordinates, where rows are numbers of TDCs</span>
+    <span class="c1"># and columns are the pixels that connected to these TDCs</span>
+    <span class="k">if</span> <span class="n">firmware_version</span> <span class="o">==</span> <span class="s2">&quot;2212s&quot;</span><span class="p">:</span>
+        <span class="n">pix_coor</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">256</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">64</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
+    <span class="k">elif</span> <span class="n">firmware_version</span> <span class="o">==</span> <span class="s2">&quot;2212b&quot;</span><span class="p">:</span>
+        <span class="n">pix_coor</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">256</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">64</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Firmware version is not recognized.&quot;</span><span class="p">)</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">()</span>
+
+    <span class="n">timestamps_per_pixel</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">256</span><span class="p">)</span>
+
+    <span class="c1"># In the case a single file is passed, make a list out of it</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">files</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">files</span> <span class="o">=</span> <span class="p">[</span><span class="n">files</span><span class="p">]</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">files</span><span class="p">)),</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Collecting data&quot;</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">absolute_timestamps</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">f_up</span><span class="o">.</span><span class="n">unpack_binary_data</span><span class="p">(</span>
+                <span class="n">files</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+                <span class="n">daughterboard_number</span><span class="p">,</span>
+                <span class="n">motherboard_number</span><span class="p">,</span>
+                <span class="n">firmware_version</span><span class="p">,</span>
+                <span class="n">timestamps</span><span class="p">,</span>
+                <span class="n">include_offset</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                <span class="n">apply_calibration</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">data</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">f_up</span><span class="o">.</span><span class="n">unpack_binary_data_with_absolute_timestamps</span><span class="p">(</span>
+                <span class="n">files</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+                <span class="n">daughterboard_number</span><span class="p">,</span>
+                <span class="n">motherboard_number</span><span class="p">,</span>
+                <span class="n">firmware_version</span><span class="p">,</span>
+                <span class="n">timestamps</span><span class="p">,</span>
+                <span class="n">include_offset</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                <span class="n">apply_calibration</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">256</span><span class="p">):</span>
+            <span class="n">tdc</span><span class="p">,</span> <span class="n">pix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argwhere</span><span class="p">(</span><span class="n">pix_coor</span> <span class="o">==</span> <span class="n">i</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">tdc</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">pix</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">ind1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">tdc</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="n">ind</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">timestamps_per_pixel</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">tdc</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="n">ind</span><span class="p">[</span><span class="n">ind1</span><span class="p">]])</span>
+
+    <span class="k">if</span> <span class="n">correct_pix_address</span><span class="p">:</span>
+        <span class="n">fix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">timestamps_per_pixel</span><span class="p">))</span>
+        <span class="n">fix</span><span class="p">[:</span><span class="mi">128</span><span class="p">]</span> <span class="o">=</span> <span class="n">timestamps_per_pixel</span><span class="p">[</span><span class="mi">128</span><span class="p">:]</span>
+        <span class="n">fix</span><span class="p">[</span><span class="mi">128</span><span class="p">:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">flip</span><span class="p">(</span><span class="n">timestamps_per_pixel</span><span class="p">[:</span><span class="mi">128</span><span class="p">])</span>
+        <span class="n">timestamps_per_pixel</span> <span class="o">=</span> <span class="n">fix</span>
+        <span class="k">del</span> <span class="n">fix</span>
+
+    <span class="c1"># Apply mask if requested</span>
+    <span class="k">if</span> <span class="n">app_mask</span><span class="p">:</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">apply_mask</span><span class="p">(</span><span class="n">daughterboard_number</span><span class="p">,</span> <span class="n">motherboard_number</span><span class="p">)</span>
+        <span class="n">timestamps_per_pixel</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="n">acq_window_length</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">data</span><span class="p">[:]</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">*</span> <span class="mf">1e-12</span>
+    <span class="n">number_of_cycles</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="o">-</span><span class="mi">2</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
+
+    <span class="n">rates</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">timestamps_per_pixel</span>
+        <span class="o">/</span> <span class="n">acq_window_length</span>
+        <span class="o">/</span> <span class="n">number_of_cycles</span>
+        <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">files</span><span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">save_to_file</span><span class="p">:</span>
+        <span class="n">files</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">getmtime</span><span class="p">)</span>
+        <span class="n">file_name</span> <span class="o">=</span> <span class="n">files</span><span class="p">[</span><span class="mi">0</span><span class="p">][:</span><span class="o">-</span><span class="mi">4</span><span class="p">]</span> <span class="o">+</span> <span class="s2">&quot;-&quot;</span> <span class="o">+</span> <span class="n">files</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][:</span><span class="o">-</span><span class="mi">4</span><span class="p">]</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="s2">&quot;senpop_data&quot;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">FileNotFoundError</span> <span class="k">as</span> <span class="n">_</span><span class="p">:</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="s2">&quot;senpop_data&quot;</span><span class="p">)</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="s2">&quot;senpop_data&quot;</span><span class="p">)</span>
+
+        <span class="n">np</span><span class="o">.</span><span class="n">savetxt</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">file_name</span><span class="si">}</span><span class="s2">_senpop_numbers.txt&quot;</span><span class="p">,</span> <span class="n">timestamps_per_pixel</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="s2">&quot;..&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">calculate_rates</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">timestamps_per_pixel</span><span class="p">,</span> <span class="n">rates</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">timestamps_per_pixel</span></div>
+
+
+
+<div class="viewcode-block" id="plot_single_pix_hist">
+<a class="viewcode-back" href="../../../daplis.functions.plot_tmsp.html#daplis.functions.sensor_plot.plot_single_pix_hist">[docs]</a>
+<span class="k">def</span> <span class="nf">plot_single_pix_hist</span><span class="p">(</span>
+    <span class="n">path</span><span class="p">,</span>
+    <span class="n">pixels</span><span class="p">,</span>
+    <span class="n">daughterboard_number</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">motherboard_number</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">firmware_version</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">timestamps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">512</span><span class="p">,</span>
+    <span class="n">cycle_length</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">4e9</span><span class="p">,</span>
+    <span class="n">multiplier</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mf">1e6</span><span class="p">,</span>
+    <span class="n">show_fig</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">fit_average</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">color</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;teal&quot;</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Plot a histogram for each pixel in the given range.</span>
+
+<span class="sd">    Used mainly for checking the homogeneity of the LinoSPAD2 output</span>
+<span class="sd">    (mainly clock and acquisition window size settings).</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    path : str</span>
+<span class="sd">        Path to data file.</span>
+<span class="sd">    pixels : array-like, list</span>
+<span class="sd">        Array of pixels indices.</span>
+<span class="sd">    daughterboard_number : str</span>
+<span class="sd">        LinoSPAD2 daughterboard number.</span>
+<span class="sd">    motherboard_number : str</span>
+<span class="sd">        LinoSPAD2 motherboard (FPGA) number, including the &#39;#&#39;.</span>
+<span class="sd">    firmware_version : str</span>
+<span class="sd">        LinoSPAD2 firmware version.</span>
+<span class="sd">    timestamps : int, optional</span>
+<span class="sd">        Number of timestamps per pixel per acquisition cycle. The</span>
+<span class="sd">        default is 512.</span>
+<span class="sd">    cycle_length : float, optional</span>
+<span class="sd">        Length of the data acquisition cycle. The default is 4e9, or 4 ms.</span>
+<span class="sd">    multiplier : int, optional</span>
+<span class="sd">        Multiplier of 17.857 for the bin size of the histogram. The</span>
+<span class="sd">        default is 1e6.</span>
+<span class="sd">    show_fig : bool, optional</span>
+<span class="sd">        Switch for showing the output figure. The default is False.</span>
+<span class="sd">    fit_average : int, optional</span>
+<span class="sd">        Switch for fitting averages of histogram counts in windows of</span>
+<span class="sd">        +/-10. The default is False.</span>
+<span class="sd">    color : str, optional</span>
+<span class="sd">        Color of the histogram. The default is &#39;teal&#39;.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    None.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># parameter type check</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">firmware_version</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;&#39;firmware_version&#39; should be a string&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">daughterboard_number</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;&#39;daughterboard_number&#39; should be a string&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">motherboard_number</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;&#39;motherboard_number&#39; should be a string&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">lin_fit</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">a</span> <span class="o">*</span> <span class="n">x</span> <span class="o">+</span> <span class="n">b</span>
+
+    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">pixels</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="n">pixels</span> <span class="o">=</span> <span class="p">[</span><span class="n">pixels</span><span class="p">]</span>
+
+    <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+
+    <span class="c1"># data_files = glob.glob(&quot;*.dat*&quot;)</span>
+    <span class="n">data_files</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s2">&quot;*.dat*&quot;</span><span class="p">)</span>
+    <span class="n">data_files</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">getmtime</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">show_fig</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">ion</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">ioff</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">num</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">data_files</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;&gt; &gt; &gt; Plotting pixel histograms, Working on </span><span class="si">{</span><span class="n">num</span><span class="si">}</span><span class="s2"> &lt; &lt; &lt;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="n">data</span> <span class="o">=</span> <span class="n">f_up</span><span class="o">.</span><span class="n">unpack_binary_data</span><span class="p">(</span>
+            <span class="n">num</span><span class="p">,</span>
+            <span class="n">daughterboard_number</span><span class="p">,</span>
+            <span class="n">motherboard_number</span><span class="p">,</span>
+            <span class="n">firmware_version</span><span class="p">,</span>
+            <span class="n">timestamps</span><span class="p">,</span>
+            <span class="n">include_offset</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">apply_calibration</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">bins</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span>
+            <span class="mi">0</span><span class="p">,</span> <span class="n">cycle_length</span><span class="p">,</span> <span class="mi">2500</span> <span class="o">/</span> <span class="mi">140</span> <span class="o">*</span> <span class="n">multiplier</span>
+        <span class="p">)</span>  <span class="c1"># bin size of 17.867 us</span>
+
+        <span class="k">if</span> <span class="n">pixels</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">pixels</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">145</span><span class="p">,</span> <span class="mi">165</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">pixels</span><span class="p">):</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;font.size&quot;</span><span class="p">:</span> <span class="mi">27</span><span class="p">})</span>
+            <span class="c1"># Define matrix of pixel coordinates, where rows are numbers</span>
+            <span class="c1"># of TDCs and columns are the pixels that connected to</span>
+            <span class="c1"># these TDCs</span>
+            <span class="k">if</span> <span class="n">firmware_version</span> <span class="o">==</span> <span class="s2">&quot;2212s&quot;</span><span class="p">:</span>
+                <span class="n">pix_coor</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">256</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">64</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
+            <span class="k">elif</span> <span class="n">firmware_version</span> <span class="o">==</span> <span class="s2">&quot;2212b&quot;</span><span class="p">:</span>
+                <span class="n">pix_coor</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">256</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">64</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Firmware version is not recognized.&quot;</span><span class="p">)</span>
+                <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">()</span>
+            <span class="n">tdc</span><span class="p">,</span> <span class="n">pix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argwhere</span><span class="p">(</span><span class="n">pix_coor</span> <span class="o">==</span> <span class="n">pixels</span><span class="p">[</span><span class="n">i</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">tdc</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">pix</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">ind1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">tdc</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="n">ind</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">data_to_plot</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">tdc</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="n">ind</span><span class="p">[</span><span class="n">ind1</span><span class="p">]]</span>
+
+            <span class="n">n</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">p</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">data_to_plot</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="n">bins</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">fit_average</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
+                <span class="n">av_win</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="o">/</span> <span class="mi">10</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+                <span class="n">av_win_in</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="o">/</span> <span class="mi">10</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">av_win</span><span class="p">):</span>
+                    <span class="n">av_win</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">n</span><span class="p">[</span><span class="n">j</span> <span class="o">*</span> <span class="mi">10</span> <span class="p">:</span> <span class="n">j</span> <span class="o">*</span> <span class="mi">10</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+                    <span class="n">av_win_in</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">b</span><span class="p">[</span><span class="n">j</span> <span class="o">*</span> <span class="mi">10</span> <span class="p">:</span> <span class="n">j</span> <span class="o">*</span> <span class="mi">10</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+
+                <span class="n">a</span> <span class="o">=</span> <span class="mi">1</span>
+                <span class="n">b</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">average</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+
+                <span class="n">par</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">curve_fit</span><span class="p">(</span><span class="n">lin_fit</span><span class="p">,</span> <span class="n">av_win_in</span><span class="p">,</span> <span class="n">av_win</span><span class="p">,</span> <span class="n">p0</span><span class="o">=</span><span class="p">[</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">])</span>
+
+                <span class="n">av_win_fit</span> <span class="o">=</span> <span class="n">lin_fit</span><span class="p">(</span><span class="n">av_win_in</span><span class="p">,</span> <span class="n">par</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">par</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+            <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;Time (ps)&quot;</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;Counts (-)&quot;</span><span class="p">)</span>
+            <span class="c1"># plt.plot(av_win_in, av_win, color=&quot;black&quot;, linewidth=8)</span>
+            <span class="k">if</span> <span class="n">fit_average</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
+                <span class="n">plt</span><span class="o">.</span><span class="n">gcf</span><span class="p">()</span>
+                <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">av_win_in</span><span class="p">,</span> <span class="n">av_win_fit</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;black&quot;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">ticklabel_format</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="s2">&quot;sci&quot;</span><span class="p">,</span> <span class="n">scilimits</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Pixel </span><span class="si">{</span><span class="n">pixels</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="s2">&quot;results/single pixel histograms&quot;</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">FileNotFoundError</span> <span class="k">as</span> <span class="n">_</span><span class="p">:</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="s2">&quot;results/single pixel histograms&quot;</span><span class="p">)</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="s2">&quot;results/single pixel histograms&quot;</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">num</span><span class="si">}</span><span class="s2">, pixel </span><span class="si">{</span><span class="n">pixels</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="si">}</span><span class="s2">.png&quot;</span><span class="p">)</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="s2">&quot;../..&quot;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="plot_sensor_population">
+<a class="viewcode-back" href="../../../daplis.functions.plot_tmsp.html#daplis.functions.sensor_plot.plot_sensor_population">[docs]</a>
+<span class="k">def</span> <span class="nf">plot_sensor_population</span><span class="p">(</span>
+    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">daughterboard_number</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">motherboard_number</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">firmware_version</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">timestamps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">512</span><span class="p">,</span>
+    <span class="n">scale</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;linear&quot;</span><span class="p">,</span>
+    <span class="n">style</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;-o&quot;</span><span class="p">,</span>
+    <span class="n">show_fig</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">app_mask</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">color</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;rebeccapurple&quot;</span><span class="p">,</span>
+    <span class="n">correct_pix_address</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">fit_peaks</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">threshold_multiplier</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+    <span class="n">pickle_fig</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">absolute_timestamps</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">single_file</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Plot number of timestamps in each pixel for all datafiles.</span>
+
+<span class="sd">    Plot sensor population as number of timestamps vs. pixel number.</span>
+<span class="sd">    Analyzes all data files in the given folder. The output figure is saved</span>
+<span class="sd">    in the &quot;results&quot; folder, which is created if it does not exist, in</span>
+<span class="sd">    the same folder where datafiles are. Works with the firmware version</span>
+<span class="sd">    &#39;2212&#39;.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    path : str</span>
+<span class="sd">        Path to the datafiles.</span>
+<span class="sd">    daughterboard_number : str</span>
+<span class="sd">        The LinoSPAD2 daughterboard number. Required for choosing the</span>
+<span class="sd">        correct calibration data.</span>
+<span class="sd">    motherboard_number : str</span>
+<span class="sd">        The LinoSPAD2 motherboard number, including the &quot;#&quot;.</span>
+<span class="sd">    firmware_version : str</span>
+<span class="sd">        LinoSPAD2 firmware version. Versions &#39;2212b&#39; (block) or &#39;2212s&#39;</span>
+<span class="sd">        (skip) are recognized.</span>
+<span class="sd">    timestamps : int, optional</span>
+<span class="sd">        Number of timestamps per pixel per acquisition cycle. Default is</span>
+<span class="sd">        &quot;512&quot;.</span>
+<span class="sd">    scale : str, optional</span>
+<span class="sd">        Scale for the y-axis of the plot. Use &quot;log&quot; for logarithmic.</span>
+<span class="sd">        The default is &quot;linear&quot;.</span>
+<span class="sd">    style : str, optional</span>
+<span class="sd">        Style of the plot. The default is &quot;-o&quot;.</span>
+<span class="sd">    show_fig : bool, optional</span>
+<span class="sd">        Switch for showing the plot. The default is False.</span>
+<span class="sd">    app_mask : bool, optional</span>
+<span class="sd">        Switch for applying the mask on warm/hot pixels. The default is</span>
+<span class="sd">        True.</span>
+<span class="sd">    color : str, optional</span>
+<span class="sd">        Color for the plot. The default is &#39;rebeccapurple&#39;.</span>
+<span class="sd">    correct_pix_address : bool, optional</span>
+<span class="sd">        Switch for correcting pixel addressing for the faulty firmware</span>
+<span class="sd">        version for the 23 side of the daughterboard. The default is</span>
+<span class="sd">        False.</span>
+<span class="sd">    fit_peaks : bool, optional</span>
+<span class="sd">        Switch for finding the highest peaks and fitting them with a</span>
+<span class="sd">        Gaussian to provide their position. The default is False.</span>
+<span class="sd">    threshold_multiplier : int, optional</span>
+<span class="sd">        Threshold multiplier that is applied to median across the whole</span>
+<span class="sd">        sensor for finding peaks. The default is 10.</span>
+<span class="sd">    pickle_fig : bool, optional</span>
+<span class="sd">        Switch for pickling the figure. Can be used when plotting takes</span>
+<span class="sd">        a lot of time. The default is False.</span>
+<span class="sd">    absolute_timestamps : bool, optional</span>
+<span class="sd">        Indicator for data files with absolute timestamps. Default is</span>
+<span class="sd">        False.</span>
+<span class="sd">    single_file : optional</span>
+<span class="sd">        Switch for using only the first file in the folder. Can be</span>
+<span class="sd">        utilized for a quick plot. The default is False.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    None.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    -------</span>
+<span class="sd">    An example how the function can be used to get the sensor</span>
+<span class="sd">    occupation from a single file while looking for peaks - the most</span>
+<span class="sd">    quick and straightforward approach to find where the beams were</span>
+<span class="sd">    focused and get the peak position for further use in, e.g., delta_t</span>
+<span class="sd">    functions. Here, the data were collected using the &#39;23&#39;-side</span>
+<span class="sd">    sensor half which required correction of the pixel addressing.</span>
+<span class="sd">    Offset calibration for the sensor is not available therefore</span>
+<span class="sd">    it should be skipped.</span>
+
+<span class="sd">    First, get the absolute path to where the &#39;.dat&#39; files are.</span>
+<span class="sd">    &gt;&gt;&gt; path = r&#39;C:/Path/To/Data&#39;</span>
+
+<span class="sd">    Now to the function itself.</span>
+<span class="sd">    &gt;&gt;&gt; plot_sensor_popuation(</span>
+<span class="sd">    &gt;&gt;&gt; path,</span>
+<span class="sd">    &gt;&gt;&gt; daughterboard_number=&quot;NL11&quot;,</span>
+<span class="sd">    &gt;&gt;&gt; motherboard_number=&quot;#21&quot;,</span>
+<span class="sd">    &gt;&gt;&gt; firmware_version=&quot;2212s&quot;,</span>
+<span class="sd">    &gt;&gt;&gt; timestamps = 1000,</span>
+<span class="sd">    &gt;&gt;&gt; show_fig = True,</span>
+<span class="sd">    &gt;&gt;&gt; correct_pix_address = True,</span>
+<span class="sd">    &gt;&gt;&gt; fit_peaks = True,</span>
+<span class="sd">    &gt;&gt;&gt; single_file = True,</span>
+<span class="sd">    &gt;&gt;&gt; )</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># parameter type check</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">firmware_version</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+            <span class="s2">&quot;&#39;firmware_version&#39; should be a string, &#39;2212b&#39; or &#39;2212s&#39;&quot;</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">daughterboard_number</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+            <span class="s2">&quot;&#39;daughterboard_number&#39; should be a string, &#39;NL11&#39; or &#39;A5&#39;&quot;</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">motherboard_number</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;&#39;motherboard_number&#39; should be a string&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">show_fig</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">ion</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">ioff</span><span class="p">()</span>
+
+    <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+
+    <span class="c1"># files = glob.glob(&quot;*.dat*&quot;)</span>
+    <span class="n">files</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s2">&quot;*.dat*&quot;</span><span class="p">)</span>
+    <span class="n">files</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">getmtime</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">single_file</span><span class="p">:</span>
+        <span class="n">files</span> <span class="o">=</span> <span class="n">files</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">plot_name</span> <span class="o">=</span> <span class="n">files</span><span class="p">[:</span><span class="o">-</span><span class="mi">4</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">plot_name</span> <span class="o">=</span> <span class="n">files</span><span class="p">[</span><span class="mi">0</span><span class="p">][:</span><span class="o">-</span><span class="mi">4</span><span class="p">]</span> <span class="o">+</span> <span class="s2">&quot;-&quot;</span> <span class="o">+</span> <span class="n">files</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][:</span><span class="o">-</span><span class="mi">4</span><span class="p">]</span>
+
+    <span class="c1"># valid_per_pixel = np.zeros(256)</span>
+
+    <span class="nb">print</span><span class="p">(</span>
+        <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&gt; &gt; &gt; Collecting data for sensor population plot,&quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;Working in </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2"> &lt; &lt; &lt;</span><span class="se">\n</span><span class="s2">&quot;</span>
+    <span class="p">)</span>
+
+    <span class="c1"># If fitting the peaks, calculate the photon rates in each peak as</span>
+    <span class="c1"># well</span>
+    <span class="k">if</span> <span class="n">fit_peaks</span><span class="p">:</span>
+        <span class="n">timestamps_per_pixel</span><span class="p">,</span> <span class="n">rates</span> <span class="o">=</span> <span class="n">collect_data_and_apply_mask</span><span class="p">(</span>
+            <span class="n">files</span><span class="p">,</span>
+            <span class="n">daughterboard_number</span><span class="p">,</span>
+            <span class="n">motherboard_number</span><span class="p">,</span>
+            <span class="n">firmware_version</span><span class="p">,</span>
+            <span class="n">timestamps</span><span class="p">,</span>
+            <span class="n">app_mask</span><span class="p">,</span>
+            <span class="n">absolute_timestamps</span><span class="p">,</span>
+            <span class="n">save_to_file</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">correct_pix_address</span><span class="o">=</span><span class="n">correct_pix_address</span><span class="p">,</span>
+            <span class="n">calculate_rates</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">timestamps_per_pixel</span> <span class="o">=</span> <span class="n">collect_data_and_apply_mask</span><span class="p">(</span>
+            <span class="n">files</span><span class="p">,</span>
+            <span class="n">daughterboard_number</span><span class="p">,</span>
+            <span class="n">motherboard_number</span><span class="p">,</span>
+            <span class="n">firmware_version</span><span class="p">,</span>
+            <span class="n">timestamps</span><span class="p">,</span>
+            <span class="n">app_mask</span><span class="p">,</span>
+            <span class="n">absolute_timestamps</span><span class="p">,</span>
+            <span class="n">save_to_file</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">correct_pix_address</span><span class="o">=</span><span class="n">correct_pix_address</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="c1"># Plotting</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&gt; &gt; &gt; Plotting &lt; &lt; &lt;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;font.size&quot;</span><span class="p">:</span> <span class="mi">27</span><span class="p">})</span>
+    <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">scale</span> <span class="o">==</span> <span class="s2">&quot;log&quot;</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">yscale</span><span class="p">(</span><span class="s2">&quot;log&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">timestamps_per_pixel</span><span class="p">,</span> <span class="n">style</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;Pixel number (-)&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;Photons (-)&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Find and fit peaks if fit_peaks is True</span>
+    <span class="k">if</span> <span class="n">fit_peaks</span><span class="p">:</span>
+        <span class="n">threshold</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">timestamps_per_pixel</span><span class="p">)</span> <span class="o">*</span> <span class="n">threshold_multiplier</span>
+        <span class="n">fit_width</span> <span class="o">=</span> <span class="mi">20</span>
+        <span class="n">peaks</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">find_peaks</span><span class="p">(</span><span class="n">timestamps_per_pixel</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="n">threshold</span><span class="p">)</span>
+        <span class="n">peaks</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">peaks</span><span class="p">)</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Fitting the peaks with gaussian&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">peak_index</span> <span class="ow">in</span> <span class="n">peaks</span><span class="p">:</span>
+            <span class="n">x_fit</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span>
+                <span class="n">peak_index</span> <span class="o">-</span> <span class="n">fit_width</span><span class="p">,</span> <span class="n">peak_index</span> <span class="o">+</span> <span class="n">fit_width</span> <span class="o">+</span> <span class="mi">1</span>
+            <span class="p">)</span>
+            <span class="n">cut_above_256</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">x_fit</span> <span class="o">&gt;=</span> <span class="mi">256</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">x_fit</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">x_fit</span><span class="p">,</span> <span class="n">cut_above_256</span><span class="p">)</span>
+            <span class="n">y_fit</span> <span class="o">=</span> <span class="n">timestamps_per_pixel</span><span class="p">[</span><span class="n">x_fit</span><span class="p">]</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">params</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">fit_gaussian</span><span class="p">(</span><span class="n">x_fit</span><span class="p">,</span> <span class="n">y_fit</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">_</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+                <span class="n">x_fit</span><span class="p">,</span>
+                <span class="n">utils</span><span class="o">.</span><span class="n">gaussian</span><span class="p">(</span><span class="n">x_fit</span><span class="p">,</span> <span class="o">*</span><span class="n">params</span><span class="p">),</span>
+                <span class="s2">&quot;--&quot;</span><span class="p">,</span>
+                <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Peak at </span><span class="si">{</span><span class="n">peak_index</span><span class="si">}</span><span class="s2">, &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;Rate: </span><span class="si">{</span><span class="n">rates</span><span class="p">[</span><span class="n">peak_index</span><span class="p">]</span><span class="o">/</span><span class="mi">1000</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2"> kHz&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+
+    <span class="c1"># Save the figure</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="s2">&quot;results/sensor_population&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">FileNotFoundError</span><span class="p">:</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="s2">&quot;results/sensor_population&quot;</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="s2">&quot;results/sensor_population&quot;</span><span class="p">)</span>
+    <span class="c1"># fig.tight_layout()</span>
+    <span class="k">if</span> <span class="n">single_file</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">plot_name</span><span class="si">}</span><span class="s2">_single_file.png&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span>
+            <span class="s2">&quot;&gt; &gt; &gt; The plot is saved as &#39;</span><span class="si">{plot_name}</span><span class="s2">_single_file.png&#39;&quot;</span>
+            <span class="s2">&quot;in {os.getcwd()} &lt; &lt; &lt;&quot;</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">pickle_fig</span><span class="p">:</span>
+            <span class="n">pickle</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">fig</span><span class="p">,</span> <span class="nb">open</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">plot_name</span><span class="si">}</span><span class="s2">_single_file.pickle&quot;</span><span class="p">,</span> <span class="s2">&quot;wb&quot;</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">plot_name</span><span class="si">}</span><span class="s2">.png&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;&gt; &gt; &gt; The plot is saved as &#39;</span><span class="si">{</span><span class="n">plot_name</span><span class="si">}</span><span class="s2">.png&#39; &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;in </span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">()</span><span class="si">}</span><span class="s2"> &lt; &lt; &lt;&quot;</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">pickle_fig</span><span class="p">:</span>
+            <span class="n">pickle</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">fig</span><span class="p">,</span> <span class="nb">open</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">plot_name</span><span class="si">}</span><span class="s2">.pickle&quot;</span><span class="p">,</span> <span class="s2">&quot;wb&quot;</span><span class="p">))</span>
+
+    <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="s2">&quot;../..&quot;</span><span class="p">)</span></div>
+
+
+
+<span class="c1"># TODO don&#39;t have data to test the function</span>
+<span class="c1"># def plot_sensor_population_spdc(</span>
+<span class="c1">#     path,</span>
+<span class="c1">#     daughterboard_number: str,</span>
+<span class="c1">#     motherboard_number: str,</span>
+<span class="c1">#     firmware_version: str,</span>
+<span class="c1">#     timestamps: int = 512,</span>
+<span class="c1">#     show_fig: bool = False,</span>
+<span class="c1"># ):</span>
+<span class="c1">#     &quot;&quot;&quot;Plot sensor population for SPDC data.</span>
+
+<span class="c1">#     Plots SPDC data subtracting the background (data with the SPDC</span>
+<span class="c1">#     output turned off). Due to the low sensitivity of the LinoSPAD2</span>
+<span class="c1">#     sensor to light at 810 nm of Thorlabs SPDC output, subtracting</span>
+<span class="c1">#     background is required to show any meaningful signal.</span>
+
+<span class="c1">#     Parameters</span>
+<span class="c1">#     ----------</span>
+<span class="c1">#     path : str</span>
+<span class="c1">#         Path to data files.</span>
+<span class="c1">#     daughterboard_number : str</span>
+<span class="c1">#         LinoSPAD2 daughterboard number. Either &quot;A5&quot; or &quot;NL11&quot; is</span>
+<span class="c1">#         accepted.</span>
+<span class="c1">#     motherboard_number : str</span>
+<span class="c1">#         LinoSPAD2 motherboard number.</span>
+<span class="c1">#     timestamps : int, optional</span>
+<span class="c1">#         Number of timestamps per pixel per acquisition cycle. The</span>
+<span class="c1">#         default is 512.</span>
+<span class="c1">#     show_fig : bool, optional</span>
+<span class="c1">#         Switch for showing the plot. The default is False.</span>
+
+<span class="c1">#     Raises</span>
+<span class="c1">#     ------</span>
+<span class="c1">#     TypeError</span>
+<span class="c1">#         Raised when &#39;daughterboard_number&#39; is not a string.</span>
+<span class="c1">#     ValueError</span>
+<span class="c1">#         Raised when the number of data files of SPDC data is different</span>
+<span class="c1">#         from the number of data files of background data.</span>
+
+<span class="c1">#     Returns</span>
+<span class="c1">#     -------</span>
+<span class="c1">#     None.</span>
+
+<span class="c1">#     &quot;&quot;&quot;</span>
+<span class="c1">#     # parameter type check</span>
+<span class="c1">#     if isinstance(daughterboard_number, str) is not True:</span>
+<span class="c1">#         raise TypeError(</span>
+<span class="c1">#             &quot;&#39;daughterboard_number&#39; should be string, either &#39;NL11&#39; or &#39;A5&#39;&quot;</span>
+<span class="c1">#         )</span>
+<span class="c1">#     if isinstance(firmware_version, str) is not True:</span>
+<span class="c1">#         raise TypeError(&quot;&#39;firmware_version&#39; should be string&quot;)</span>
+<span class="c1">#     if isinstance(motherboard_number, str) is not True:</span>
+<span class="c1">#         raise TypeError(</span>
+<span class="c1">#             &quot;&#39;daughterboard_number&#39; should be string, either &#39;NL11&#39; or &#39;A5&#39;&quot;</span>
+<span class="c1">#         )</span>
+
+<span class="c1">#     if show_fig is True:</span>
+<span class="c1">#         plt.ion()</span>
+<span class="c1">#     else:</span>
+<span class="c1">#         plt.ioff()</span>
+
+<span class="c1">#     os.chdir(path)</span>
+
+<span class="c1">#     # files = glob.glob(&quot;*.dat*&quot;)</span>
+
+<span class="c1">#     files = glob.glob(&quot;*.dat*&quot;)</span>
+<span class="c1">#     files.sort(key=os.path.getmtime)</span>
+
+<span class="c1">#     # background data for subtracting</span>
+<span class="c1">#     path_bckg = path + &quot;/bckg&quot;</span>
+<span class="c1">#     os.chdir(path_bckg)</span>
+<span class="c1">#     files_bckg = glob.glob(&quot;*.dat*&quot;)</span>
+<span class="c1">#     os.chdir(&quot;..&quot;)</span>
+
+<span class="c1">#     if len(files) != len(files_bckg):</span>
+<span class="c1">#         raise ValueError(</span>
+<span class="c1">#             &quot;Number of files with background data is different from the&quot;</span>
+<span class="c1">#             &quot;number of actual data, exiting.&quot;</span>
+<span class="c1">#         )</span>
+
+<span class="c1">#     plot_name = files[0][:-4] + &quot;-&quot; + files[-1][:-4]</span>
+
+<span class="c1">#     valid_per_pixel = np.zeros(256)</span>
+<span class="c1">#     valid_per_pixel_bckg = np.zeros(256)</span>
+
+<span class="c1">#     pix_coor = np.arange(256).reshape(64, 4)</span>
+
+<span class="c1">#     # Collect SPDC data</span>
+<span class="c1">#     for i in tqdm(range(len(files)), desc=&quot;Going through datafiles&quot;):</span>
+<span class="c1">#         data_all = f_up.unpack_binary_data(</span>
+<span class="c1">#             files[i],</span>
+<span class="c1">#             daughterboard_number=&quot;A5&quot;,</span>
+<span class="c1">#             firmware_version=&quot;2212b&quot;,</span>
+<span class="c1">#             timestamps=timestamps,</span>
+<span class="c1">#         )</span>
+
+<span class="c1">#         for i in np.arange(0, 256):</span>
+<span class="c1">#             tdc, pix = np.argwhere(pix_coor == i)[0]</span>
+<span class="c1">#             ind = np.where(data_all[tdc].T[0] == pix)[0]</span>
+<span class="c1">#             ind1 = ind[np.where(data_all[tdc].T[1][ind] &gt; 0)[0]]</span>
+<span class="c1">#             valid_per_pixel[i] += len(data_all[tdc].T[1][ind1])</span>
+
+<span class="c1">#     # Collect background data for subtracting</span>
+<span class="c1">#     os.chdir(path_bckg)</span>
+
+<span class="c1">#     for i in tqdm(</span>
+<span class="c1">#         range(len(files_bckg)), desc=&quot;Going through background datafiles&quot;</span>
+<span class="c1">#     ):</span>
+<span class="c1">#         data_all_bckg = f_up.unpack_binary_data(</span>
+<span class="c1">#             files_bckg[i],</span>
+<span class="c1">#             daughterboard_number=&quot;A5&quot;,</span>
+<span class="c1">#             motherboard_number=&quot;34&quot;,</span>
+<span class="c1">#             firmware_version=&quot;2212b&quot;,</span>
+<span class="c1">#             timestamps=timestamps,</span>
+<span class="c1">#         )</span>
+
+<span class="c1">#         # Fot plotting counts</span>
+<span class="c1">#         for i in np.arange(0, 256):</span>
+<span class="c1">#             tdc, pix = np.argwhere(pix_coor == i)[0]</span>
+<span class="c1">#             ind = np.where(data_all_bckg[tdc].T[0] == pix)[0]</span>
+<span class="c1">#             ind1 = ind[np.where(data_all_bckg[tdc].T[1][ind] &gt; 0)[0]]</span>
+<span class="c1">#             valid_per_pixel_bckg[i] += len(data_all_bckg[tdc].T[1][ind1])</span>
+
+<span class="c1">#     os.chdir(&quot;..&quot;)</span>
+
+<span class="c1">#     # Mask the hot/warm pixels</span>
+<span class="c1">#     path_to_back = os.getcwd()</span>
+<span class="c1">#     path_to_mask = os.path.realpath(__file__) + &quot;/../..&quot; + &quot;/params/masks&quot;</span>
+<span class="c1">#     os.chdir(path_to_mask)</span>
+<span class="c1">#     file_mask = glob.glob(</span>
+<span class="c1">#         &quot;*{}_{}*&quot;.format(daughterboard_number, motherboard_number)</span>
+<span class="c1">#     )[0]</span>
+<span class="c1">#     mask = np.genfromtxt(file_mask).astype(int)</span>
+<span class="c1">#     os.chdir(path_to_back)</span>
+
+<span class="c1">#     for i in mask:</span>
+<span class="c1">#         valid_per_pixel[i] = 0</span>
+<span class="c1">#         valid_per_pixel_bckg[i] = 0</span>
+
+<span class="c1">#     plt.rcParams.update({&quot;font.size&quot;: 22})</span>
+<span class="c1">#     plt.figure(figsize=(16, 10))</span>
+<span class="c1">#     plt.xlabel(&quot;Pixel [-]&quot;)</span>
+<span class="c1">#     plt.ylabel(&quot;Counts [-]&quot;)</span>
+<span class="c1">#     plt.title(&quot;SPDC data, background subtracted&quot;)</span>
+<span class="c1">#     plt.plot(valid_per_pixel - valid_per_pixel_bckg, &quot;o-&quot;, color=&quot;teal&quot;)</span>
+<span class="c1">#     plt.tight_layout()</span>
+
+<span class="c1">#     try:</span>
+<span class="c1">#         os.chdir(&quot;results/sensor_population&quot;)</span>
+<span class="c1">#     except Exception:</span>
+<span class="c1">#         os.makedirs(&quot;results/sensor_population&quot;)</span>
+<span class="c1">#         os.chdir(&quot;results/sensor_population&quot;)</span>
+<span class="c1">#     plt.savefig(&quot;{}_SPDC_counts.png&quot;.format(plot_name))</span>
+<span class="c1">#     plt.pause(0.1)</span>
+<span class="c1">#     os.chdir(&quot;../..&quot;)</span>
+
+
+<div class="viewcode-block" id="plot_sensor_population_full_sensor">
+<a class="viewcode-back" href="../../../daplis.functions.plot_tmsp.html#daplis.functions.sensor_plot.plot_sensor_population_full_sensor">[docs]</a>
+<span class="k">def</span> <span class="nf">plot_sensor_population_full_sensor</span><span class="p">(</span>
+    <span class="n">path</span><span class="p">,</span>
+    <span class="n">daughterboard_number</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">motherboard_number1</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">motherboard_number2</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">firmware_version</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">timestamps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">512</span><span class="p">,</span>
+    <span class="n">scale</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;linear&quot;</span><span class="p">,</span>
+    <span class="n">style</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;-o&quot;</span><span class="p">,</span>
+    <span class="n">show_fig</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">app_mask</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">color</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;salmon&quot;</span><span class="p">,</span>
+    <span class="n">fit_peaks</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">threshold_multiplier</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+    <span class="n">pickle_fig</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">single_file</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">absolute_timestamps</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Plot the number of timestamps in each pixel for all datafiles.</span>
+
+<span class="sd">    Plot sensor population as the number of timestamps vs. pixel number.</span>
+<span class="sd">    Analyzes all data files in the given folder. The output figure is saved</span>
+<span class="sd">    in the &quot;results&quot; folder, which is created if it does not exist, in</span>
+<span class="sd">    the same folder where datafiles are. Works with the firmware version</span>
+<span class="sd">    &#39;2212&#39;.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    path : str</span>
+<span class="sd">        Path to the datafiles.</span>
+<span class="sd">    daughterboard_number : str</span>
+<span class="sd">        The LinoSPAD2 daughterboard number. Required for choosing the</span>
+<span class="sd">        correct calibration data.</span>
+<span class="sd">    motherboard_number1 : str</span>
+<span class="sd">        The LinoSPAD2 motherboard number for the first board.</span>
+<span class="sd">    motherboard_number2 : str</span>
+<span class="sd">        The LinoSPAD2 motherboard number for the second board.</span>
+<span class="sd">    firmware_version : str</span>
+<span class="sd">        LinoSPAD2 firmware version. Versions &#39;2212b&#39; (block) or &#39;2212s&#39;</span>
+<span class="sd">        (skip) are recognized.</span>
+<span class="sd">    timestamps : int, optional</span>
+<span class="sd">        Number of timestamps per pixel per acquisition cycle. Default is</span>
+<span class="sd">        &quot;512&quot;.</span>
+<span class="sd">    scale : str, optional</span>
+<span class="sd">        Scale for the y-axis of the plot. Use &quot;log&quot; for logarithmic.</span>
+<span class="sd">        The default is &quot;linear&quot;.</span>
+<span class="sd">    style : str, optional</span>
+<span class="sd">        Style of the plot. The default is &quot;-o&quot;.</span>
+<span class="sd">    show_fig : bool, optional</span>
+<span class="sd">        Switch for showing the plot. The default is False.</span>
+<span class="sd">    app_mask : bool, optional</span>
+<span class="sd">        Switch for applying the mask on warm/hot pixels. The default is</span>
+<span class="sd">        True.</span>
+<span class="sd">    color : str, optional</span>
+<span class="sd">        Color for the plot. The default is &#39;salmon&#39;.</span>
+<span class="sd">    fit_peaks : bool, optional</span>
+<span class="sd">        Switch for finding the highest peaks and fitting them with a</span>
+<span class="sd">        Gaussian to provide their position. The default is False.</span>
+<span class="sd">    threshold_multiplier : int, optional</span>
+<span class="sd">        Threshold multiplier for setting the threshold for finding peaks.</span>
+<span class="sd">        The default is 10.</span>
+<span class="sd">    pickle_fig : bool, optional</span>
+<span class="sd">        Switch for pickling the figure. Can be used when plotting takes</span>
+<span class="sd">        a lot of time. The default is False.</span>
+<span class="sd">    single_file : bool, optional</span>
+<span class="sd">        Switch for unpacking only the first file for a quick plot.</span>
+<span class="sd">        The default is False.</span>
+<span class="sd">    absolute_timestamps : bool, optional</span>
+<span class="sd">        Indicator for data files with absolute timestamps. Default is</span>
+<span class="sd">        False.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    None.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+
+<span class="sd">    As the pixel addressing is incorrect for one of the sensor halves</span>
+<span class="sd">    (depends on the daughterboard-motherboards combinatios; in NL11, for</span>
+<span class="sd">    motherboard #21 pixel addressing should be applied), it is important</span>
+<span class="sd">    to apply pixel addressing to the correct board/sensor half. For this</span>
+<span class="sd">    function, the order in which the motherboards are input is key, as</span>
+<span class="sd">    pixel addressing is corrected for the second board.</span>
+
+<span class="sd">    TLDR: motherboard_number2 should be for the one where correction of</span>
+<span class="sd">    the pixel addressing is required.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># parameter type check</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">firmware_version</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+            <span class="s2">&quot;&#39;firmware_version&#39; should be a string, &#39;2212b&#39; or &#39;2212s&#39;&quot;</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">daughterboard_number</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+            <span class="s2">&quot;&#39;daughterboard_number&#39; should be a string, &#39;NL11&#39; or &#39;A5&#39;&quot;</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">motherboard_number1</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;&#39;motherboard_number1&#39; should be a string&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">motherboard_number2</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;&#39;motherboard_number2&#39; should be a string&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">show_fig</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">ion</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">ioff</span><span class="p">()</span>
+
+    <span class="n">valid_per_pixel1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">256</span><span class="p">)</span>
+    <span class="n">valid_per_pixel2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">256</span><span class="p">)</span>
+
+    <span class="c1"># Get the two folders with data from both FPGAs/sensor halves</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="n">path1</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;*</span><span class="si">{</span><span class="n">motherboard_number1</span><span class="si">}</span><span class="s2">*&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">path2</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;*</span><span class="si">{</span><span class="n">motherboard_number2</span><span class="si">}</span><span class="s2">*&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="c1"># First motherboard / half of the sensor</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">path1</span><span class="p">)</span>
+    <span class="c1"># files1 = sorted(glob.glob(&quot;*.dat*&quot;))</span>
+
+    <span class="n">files1</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s2">&quot;*.dat*&quot;</span><span class="p">)</span>
+    <span class="n">files1</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">getmtime</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">single_file</span><span class="p">:</span>
+        <span class="n">files1</span> <span class="o">=</span> <span class="n">files1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">plot_name1</span> <span class="o">=</span> <span class="n">files1</span><span class="p">[</span><span class="mi">0</span><span class="p">][:</span><span class="o">-</span><span class="mi">4</span><span class="p">]</span> <span class="o">+</span> <span class="s2">&quot;-&quot;</span>
+
+    <span class="nb">print</span><span class="p">(</span>
+        <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&gt; &gt; &gt; Collecting data for sensor population plot,&quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;Working in </span><span class="si">{</span><span class="n">path1</span><span class="si">}</span><span class="s2"> &lt; &lt; &lt;</span><span class="se">\n</span><span class="s2">&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">valid_per_pixel1</span> <span class="o">=</span> <span class="n">collect_data_and_apply_mask</span><span class="p">(</span>
+        <span class="n">files1</span><span class="p">,</span>
+        <span class="n">daughterboard_number</span><span class="p">,</span>
+        <span class="n">motherboard_number1</span><span class="p">,</span>
+        <span class="n">firmware_version</span><span class="p">,</span>
+        <span class="n">timestamps</span><span class="p">,</span>
+        <span class="n">app_mask</span><span class="p">,</span>
+        <span class="n">absolute_timestamps</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="s2">&quot;..&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Second motherboard / half of the sensor</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">path2</span><span class="p">)</span>
+    <span class="c1"># files2 = sorted(glob.glob(&quot;*.dat*&quot;))</span>
+    <span class="n">files2</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s2">&quot;*.dat*&quot;</span><span class="p">)</span>
+    <span class="n">files2</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">getmtime</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">single_file</span><span class="p">:</span>
+        <span class="n">files2</span> <span class="o">=</span> <span class="n">files2</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">plot_name2</span> <span class="o">=</span> <span class="n">files2</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][:</span><span class="o">-</span><span class="mi">4</span><span class="p">]</span>
+
+    <span class="nb">print</span><span class="p">(</span>
+        <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&gt; &gt; &gt; Collecting data for sensor population plot,&quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;Working in </span><span class="si">{</span><span class="n">path2</span><span class="si">}</span><span class="s2"> &lt; &lt; &lt;</span><span class="se">\n</span><span class="s2">&quot;</span>
+    <span class="p">)</span>
+    <span class="n">valid_per_pixel2</span> <span class="o">=</span> <span class="n">collect_data_and_apply_mask</span><span class="p">(</span>
+        <span class="n">files2</span><span class="p">,</span>
+        <span class="n">daughterboard_number</span><span class="p">,</span>
+        <span class="n">motherboard_number2</span><span class="p">,</span>
+        <span class="n">firmware_version</span><span class="p">,</span>
+        <span class="n">timestamps</span><span class="p">,</span>
+        <span class="n">app_mask</span><span class="p">,</span>
+        <span class="n">absolute_timestamps</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Fix pixel addressing for the second board</span>
+    <span class="n">fix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">valid_per_pixel2</span><span class="p">))</span>
+    <span class="n">fix</span><span class="p">[:</span><span class="mi">128</span><span class="p">]</span> <span class="o">=</span> <span class="n">valid_per_pixel2</span><span class="p">[</span><span class="mi">128</span><span class="p">:]</span>
+    <span class="n">fix</span><span class="p">[</span><span class="mi">128</span><span class="p">:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">flip</span><span class="p">(</span><span class="n">valid_per_pixel2</span><span class="p">[:</span><span class="mi">128</span><span class="p">])</span>
+    <span class="n">valid_per_pixel2</span> <span class="o">=</span> <span class="n">fix</span>
+    <span class="k">del</span> <span class="n">fix</span>
+
+    <span class="c1"># Concatenate and plot</span>
+    <span class="n">valid_per_pixel</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">valid_per_pixel1</span><span class="p">,</span> <span class="n">valid_per_pixel2</span><span class="p">])</span>
+    <span class="n">plot_name</span> <span class="o">=</span> <span class="n">plot_name1</span> <span class="o">+</span> <span class="n">plot_name2</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&gt; &gt; &gt; Plotting &lt; &lt; &lt;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;font.size&quot;</span><span class="p">:</span> <span class="mi">27</span><span class="p">})</span>
+    <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">scale</span> <span class="o">==</span> <span class="s2">&quot;log&quot;</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">yscale</span><span class="p">(</span><span class="s2">&quot;log&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">valid_per_pixel</span><span class="p">,</span> <span class="n">style</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;Pixel number (-)&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;Photons (-)&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Find and fit peaks if fit_peaks is True</span>
+    <span class="k">if</span> <span class="n">fit_peaks</span><span class="p">:</span>
+        <span class="n">threshold</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">valid_per_pixel</span><span class="p">)</span> <span class="o">*</span> <span class="n">threshold_multiplier</span>
+        <span class="n">fit_width</span> <span class="o">=</span> <span class="mi">10</span>
+        <span class="n">peaks</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">find_peaks</span><span class="p">(</span><span class="n">valid_per_pixel</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="n">threshold</span><span class="p">)</span>
+        <span class="n">peaks</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">peaks</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">peak_index</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">peaks</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Fitting Gaussians&quot;</span><span class="p">):</span>
+            <span class="n">x_fit</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span>
+                <span class="n">peak_index</span> <span class="o">-</span> <span class="n">fit_width</span><span class="p">,</span> <span class="n">peak_index</span> <span class="o">+</span> <span class="n">fit_width</span> <span class="o">+</span> <span class="mi">1</span>
+            <span class="p">)</span>
+            <span class="n">y_fit</span> <span class="o">=</span> <span class="n">valid_per_pixel</span><span class="p">[</span><span class="n">x_fit</span><span class="p">]</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">params</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">fit_gaussian</span><span class="p">(</span><span class="n">x_fit</span><span class="p">,</span> <span class="n">y_fit</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="c1"># amplitude, position, width = params</span>
+            <span class="c1"># position = np.clip(int(position), 0, 255)</span>
+
+            <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+                <span class="n">x_fit</span><span class="p">,</span>
+                <span class="n">utils</span><span class="o">.</span><span class="n">gaussian</span><span class="p">(</span><span class="n">x_fit</span><span class="p">,</span> <span class="o">*</span><span class="n">params</span><span class="p">),</span>
+                <span class="s2">&quot;--&quot;</span><span class="p">,</span>
+                <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Peak at </span><span class="si">{</span><span class="n">peak_index</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+
+    <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="s2">&quot;..&quot;</span><span class="p">)</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="s2">&quot;results/sensor_population&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">FileNotFoundError</span><span class="p">:</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="s2">&quot;results/sensor_population&quot;</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="s2">&quot;results/sensor_population&quot;</span><span class="p">)</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2">.png&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">plot_name</span><span class="p">))</span>
+    <span class="nb">print</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;&gt; &gt; &gt; The plot is saved as &#39;</span><span class="si">{</span><span class="n">plot_name</span><span class="si">}</span><span class="s2">.png&#39; &quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;in </span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">()</span><span class="si">}</span><span class="s2"> &lt; &lt; &lt;&quot;</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">pickle_fig</span><span class="p">:</span>
+        <span class="n">pickle</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">fig</span><span class="p">,</span> <span class="nb">open</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">plot_name</span><span class="si">}</span><span class="s2">.pickle&quot;</span><span class="p">,</span> <span class="s2">&quot;wb&quot;</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="unpickle_plot">
+<a class="viewcode-back" href="../../../daplis.functions.plot_tmsp.html#daplis.functions.sensor_plot.unpickle_plot">[docs]</a>
+<span class="k">def</span> <span class="nf">unpickle_plot</span><span class="p">(</span><span class="n">plot_pickle_file</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Unpickle a saved figure and return plot data.</span>
+
+<span class="sd">    Load a pickled figure with the sensor population plot, extract and</span>
+<span class="sd">    return the plot data.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    plot_pickle_file : str</span>
+<span class="sd">        The absolute path to the pickle file with the sensor population</span>
+<span class="sd">        plot.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    tuple</span>
+<span class="sd">        A tuple containing:</span>
+<span class="sd">        - fig (matplotlib.figure.Figure): The unpickled figure object.</span>
+<span class="sd">        - plot_data (dict): A dictionary with keys &quot;Histogram&quot; and</span>
+<span class="sd">        &quot;Fit_{i}&quot; (for i &gt;= 1), where each value is a tuple of x and y</span>
+<span class="sd">        data for the corresponding line plot.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    FileNotFoundError</span>
+<span class="sd">        If the specified pickle file does not exist, a FileNotFoundError</span>
+<span class="sd">        is raised and an error message is printed.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">plot_pickle_file</span><span class="p">,</span> <span class="s2">&quot;rb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">fig</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">FileNotFoundError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Pack the data into a dictionary, first is the histogram, others</span>
+    <span class="c1"># are the fits</span>
+    <span class="n">plot_data</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="c1"># Extract the data; go over lines, stack them into dictionary</span>
+    <span class="n">ax</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">line</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">ax</span><span class="o">.</span><span class="n">lines</span><span class="p">):</span>
+        <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">get_data</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">plot_data</span><span class="p">[</span><span class="s2">&quot;Plot&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">plot_data</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;Fit_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+
+    <span class="c1"># Extract the legend</span>
+    <span class="n">legend</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">get_legend</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">legend</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">legend_labels</span> <span class="o">=</span> <span class="p">[</span><span class="n">text</span><span class="o">.</span><span class="n">get_text</span><span class="p">()</span> <span class="k">for</span> <span class="n">text</span> <span class="ow">in</span> <span class="n">legend</span><span class="o">.</span><span class="n">get_texts</span><span class="p">()]</span>
+
+        <span class="n">legend_labels</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">legend_labels</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">fig</span><span class="p">,</span> <span class="n">plot_data</span><span class="p">,</span> <span class="n">legend_labels</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">fig</span><span class="p">,</span> <span class="n">plot_data</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Sergei Kulkov.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

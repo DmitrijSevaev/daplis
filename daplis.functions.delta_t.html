@@ -1,0 +1,561 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>daplis.functions.delta_t module &mdash; Data Analysis Package for LinoSPAD2 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=8d563738"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="daplis.functions.fits module" href="daplis.functions.fits.html" />
+    <link rel="prev" title="daplis.functions.cross_talk module" href="daplis.functions.cross_talk.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Data Analysis Package for LinoSPAD2
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation and dependencies</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="daplis.html">daplis functions</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="daplis.functions.calc_diff.html">daplis.functions.calc_diff module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="daplis.functions.calibrate.html">daplis.functions.calibrate module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="daplis.functions.cross_talk.html">daplis.functions.cross_talk module</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">daplis.functions.delta_t module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#daplis.functions.delta_t.calculate_and_save_timestamp_differences"><code class="docutils literal notranslate"><span class="pre">calculate_and_save_timestamp_differences()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#daplis.functions.delta_t.calculate_and_save_timestamp_differences_fast"><code class="docutils literal notranslate"><span class="pre">calculate_and_save_timestamp_differences_fast()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#daplis.functions.delta_t.calculate_and_save_timestamp_differences_full_sensor"><code class="docutils literal notranslate"><span class="pre">calculate_and_save_timestamp_differences_full_sensor()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#daplis.functions.delta_t.calculate_and_save_timestamp_differences_full_sensor_alt"><code class="docutils literal notranslate"><span class="pre">calculate_and_save_timestamp_differences_full_sensor_alt()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#daplis.functions.delta_t.collect_and_plot_timestamp_differences"><code class="docutils literal notranslate"><span class="pre">collect_and_plot_timestamp_differences()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#daplis.functions.delta_t.collect_and_plot_timestamp_differences_from_ft_file"><code class="docutils literal notranslate"><span class="pre">collect_and_plot_timestamp_differences_from_ft_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#daplis.functions.delta_t.collect_and_plot_timestamp_differences_full_sensor"><code class="docutils literal notranslate"><span class="pre">collect_and_plot_timestamp_differences_full_sensor()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#daplis.functions.delta_t.unpickle_plot"><code class="docutils literal notranslate"><span class="pre">unpickle_plot()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="daplis.functions.fits.html">daplis.functions.fits module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="daplis.functions.plot_tmsp.html">daplis.functions.sensor_plot module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="daplis.functions.unpack.html">daplis.functions.unpack module</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="contribute.html">How to contribute</a></li>
+<li class="toctree-l1"><a class="reference internal" href="license.html">License and contact info</a></li>
+<li class="toctree-l1"><a class="reference internal" href="acknowledgement.html">Acknowledgement</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Data Analysis Package for LinoSPAD2</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="daplis.html">daplis functions</a></li>
+      <li class="breadcrumb-item active">daplis.functions.delta_t module</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/daplis.functions.delta_t.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-daplis.functions.delta_t">
+<span id="daplis-functions-delta-t-module"></span><h1>daplis.functions.delta_t module<a class="headerlink" href="#module-daplis.functions.delta_t" title="Link to this heading"></a></h1>
+<p>Module for calculating and plotting the timestamp differences.</p>
+<p>This script utilizes an unpacking module used specifically for the
+LinoSPAD2 binary data output.</p>
+<p>This file can also be imported as a module and contains the following
+functions:</p>
+<blockquote>
+<div><p>TODO remove
+* calculate_and_save_timestamp_differences - unpacks the binary data,
+calculates timestamp differences, and saves into a ‘.feather’ file.
+Works with firmware versions ‘2208’ and ‘2212b’.</p>
+<ul class="simple">
+<li><p>calculate_and_save_timestamp_differences_fast - unpacks the binary</p></li>
+</ul>
+<p>data, calculates timestamp differences, and saves into a ‘.feather’
+file. Works with firmware versions ‘2208’ and ‘2212b’. Uses a faster
+algorithm than the function above.</p>
+<ul class="simple">
+<li><p>calculate_and_save_timestamp_differences_full_sensor - unpacks the</p></li>
+</ul>
+<p>binary data, calculates timestamp differences and saves into a
+‘.feather’ file. Works with firmware versions ‘2208’, ‘2212s’ and
+‘2212b’. Analyzes data from both sensor halves/both FPGAs. Useful
+for data where the signal is at 0 across the whole sensor from the
+start of data collecting.</p>
+<ul class="simple">
+<li><p>calculate_and_save_timestamp_differences_full_sensor_alt - unpacks</p></li>
+</ul>
+<p>the binary data, calculates timestamp differences and saves into a
+‘.feather’ file. Works with firmware versions ‘2208’, ‘2212s’ and
+‘2212b’. Analyzes data from both sensor halves/both FPGAs. Useful
+for data where signal is above zero right from the start.</p>
+<ul class="simple">
+<li><p>collect_and_plot_timestamp_differences - collect timestamps from a</p></li>
+</ul>
+<p>‘.feather’ file and plot them in a grid.</p>
+<p>TODO remove
+* collect_and_plot_timestamp_differences_from_ft_file - unpack the
+‘.feather’ file requested, collect timestamp differences and
+plot it as a grid of plots. Useful when only the ‘.feather’ file
+is available and not the raw ‘.dat’ files.</p>
+<ul class="simple">
+<li><p>collect_and_plot_timestamp_differences_full_sensor - collect</p></li>
+</ul>
+<p>timestamps from a ‘.feather’ file and plot histograms of them
+in a grid. This function should be used for the full sensor
+setup.</p>
+<ul class="simple">
+<li><p>unpickle_plot - unpickle the ‘.pkl’ file with a delta_t histogram.</p></li>
+</ul>
+<p>Can be used to presaved ‘.pkl’ files for fine control over the plot.</p>
+</div></blockquote>
+<dl class="py function">
+<dt class="sig sig-object py" id="daplis.functions.delta_t.calculate_and_save_timestamp_differences">
+<span class="sig-prename descclassname"><span class="pre">daplis.functions.delta_t.</span></span><span class="sig-name descname"><span class="pre">calculate_and_save_timestamp_differences</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pixels</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rewrite</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">daughterboard_number</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">motherboard_number</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">firmware_version</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timestamps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">512</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delta_window</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">50000.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">app_mask</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">include_offset</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">apply_calibration</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">absolute_timestamps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">correct_pix_address</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/daplis/functions/delta_t.html#calculate_and_save_timestamp_differences"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#daplis.functions.delta_t.calculate_and_save_timestamp_differences" title="Link to this definition"></a></dt>
+<dd><p>Calculate and save timestamp differences into ‘.feather’ file.</p>
+<p>Unpacks data into a dictionary, calculates timestamp differences for
+the requested pixels, and saves them into a ‘.feather’ table. Works with
+firmware version 2212.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path</strong> (<em>str</em>) – Path to the folder with ‘.dat’ data files.</p></li>
+<li><p><strong>pixels</strong> (<em>List</em><em>[</em><em>int</em><em>] </em><em>| </em><em>List</em><em>[</em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em>) – List of pixel numbers for which the timestamp differences should
+be calculated and saved or list of two lists with pixel numbers
+for peak vs. peak calculations.</p></li>
+<li><p><strong>rewrite</strong> (<em>bool</em>) – switch for rewriting the plot if it already exists. used as a
+safeguard to avoid unwanted overwriting of the previous results.
+Switch for rewriting the ‘.feather’ file if it already exists.</p></li>
+<li><p><strong>daughterboard_number</strong> (<em>str</em>) – LinoSPAD2 daughterboard number.</p></li>
+<li><p><strong>motherboard_number</strong> (<em>str</em>) – LinoSPAD2 motherboard (FPGA) number, including the ‘#’.</p></li>
+<li><p><strong>firmware_version</strong> (<em>str</em>) – LinoSPAD2 firmware version. Versions “2212s” (skip) and “2212b”
+(block) are recognized.</p></li>
+<li><p><strong>timestamps</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of timestamps per acquisition cycle per pixel. The default
+is 512.</p></li>
+<li><p><strong>delta_window</strong> (<em>float</em><em>, </em><em>optional</em>) – Size of a window to which timestamp differences are compared.
+Differences in that window are saved. The default is 50e3 (50 ns).</p></li>
+<li><p><strong>app_mask</strong> (<em>bool</em><em>, </em><em>optional</em>) – Switch for applying the mask for hot pixels. The default is True.</p></li>
+<li><p><strong>include_offset</strong> (<em>bool</em><em>, </em><em>optional</em>) – Switch for applying offset calibration. The default is True.</p></li>
+<li><p><strong>apply_calibration</strong> (<em>bool</em><em>, </em><em>optional</em>) – Switch for applying TDC and offset calibration. If set to ‘True’
+while apply_offset_calibration is set to ‘False’, only the TDC
+calibration is applied. The default is True.</p></li>
+<li><p><strong>absolute_timestamps</strong> (<em>bool</em><em>, </em><em>optional</em>) – Indicator for data with absolute timestamps. The default is
+False.</p></li>
+<li><p><strong>correct_pix_address</strong> (<em>bool</em><em>, </em><em>optional</em>) – Correct pixel address for the sensor half on side 23 of the
+daughterboard. The default is False.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>TypeError</strong> – Only boolean values of ‘rewrite’ and string values of
+    ‘daughterboard_number’, ‘motherboard_number’, and ‘firmware_version’
+    are accepted. The first error is raised so that the plot does not
+    accidentally get rewritten in the case no clear input was given.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None.</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<p>For the sensor half on the ‘23’ side of the daughterboard, the
+pixel addressing should be correct. Let’s assume the offset
+calibration was not done for this sensor and, therefore, the
+calibration matrix is not available - it should be passed as False.
+Let’s collect timestamp differences for pairs of pixels 15-25,
+15-26, and 15-27.</p>
+<p>First, get the absolute path to where the ‘.dat’ files are.
+&gt;&gt;&gt; path = r’C:/Path/To/Data’</p>
+<p>Now to the function itself.
+&gt;&gt;&gt; calculate_and_save_timestamp_differences(
+&gt;&gt;&gt; path,
+&gt;&gt;&gt; pixels = [15, [25,26,27]],
+&gt;&gt;&gt; rewrite = True,
+&gt;&gt;&gt; daughterboard_number=”NL11”,
+&gt;&gt;&gt; motherboard_number=”#21”,
+&gt;&gt;&gt; firmware_version=”2212s”,
+&gt;&gt;&gt; timestamps = 1000,
+&gt;&gt;&gt; include_offset = False,
+&gt;&gt;&gt; correct_pixel_addressing = True,
+&gt;&gt;&gt; )</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="daplis.functions.delta_t.calculate_and_save_timestamp_differences_fast">
+<span class="sig-prename descclassname"><span class="pre">daplis.functions.delta_t.</span></span><span class="sig-name descname"><span class="pre">calculate_and_save_timestamp_differences_fast</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pixels</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rewrite</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">daughterboard_number</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">motherboard_number</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">firmware_version</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timestamps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">512</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delta_window</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">50000.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cycle_length</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">app_mask</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">include_offset</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">apply_calibration</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">absolute_timestamps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">correct_pix_address</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/daplis/functions/delta_t.html#calculate_and_save_timestamp_differences_fast"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#daplis.functions.delta_t.calculate_and_save_timestamp_differences_fast" title="Link to this definition"></a></dt>
+<dd><p>Calculate and save timestamp differences into ‘.feather’ file.</p>
+<p>Unpacks data into a dictionary, calculates timestamp differences for
+the requested pixels, and saves them into a ‘.feather’ table. Works with
+firmware version 2212. Uses a faster algorithm.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path</strong> (<em>str</em>) – Path to the folder with ‘.dat’ data files.</p></li>
+<li><p><strong>pixels</strong> (<em>List</em><em>[</em><em>int</em><em>] </em><em>| </em><em>List</em><em>[</em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em>) – List of pixel numbers for which the timestamp differences should
+be calculated and saved or list of two lists with pixel numbers
+for peak vs. peak calculations.</p></li>
+<li><p><strong>rewrite</strong> (<em>bool</em>) – switch for rewriting the plot if it already exists. used as a
+safeguard to avoid unwanted overwriting of the previous results.
+Switch for rewriting the ‘.feather’ file if it already exists.</p></li>
+<li><p><strong>daughterboard_number</strong> (<em>str</em>) – LinoSPAD2 daughterboard number.</p></li>
+<li><p><strong>motherboard_number</strong> (<em>str</em>) – LinoSPAD2 motherboard (FPGA) number, including the ‘#’.</p></li>
+<li><p><strong>firmware_version</strong> (<em>str</em>) – LinoSPAD2 firmware version. Versions “2212s” (skip) and “2212b”
+(block) are recognized.</p></li>
+<li><p><strong>timestamps</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of timestamps per acquisition cycle per pixel. The default
+is 512.</p></li>
+<li><p><strong>delta_window</strong> (<em>float</em><em>, </em><em>optional</em>) – Size of a window to which timestamp differences are compared.
+Differences in that window are saved. The default is 50e3 (50 ns).</p></li>
+<li><p><strong>cycle_length</strong> (<em>float</em><em>, </em><em>optional</em>) – Length of the acquisition cycle. The default is None.</p></li>
+<li><p><strong>app_mask</strong> (<em>bool</em><em>, </em><em>optional</em>) – Switch for applying the mask for hot pixels. The default is True.</p></li>
+<li><p><strong>include_offset</strong> (<em>bool</em><em>, </em><em>optional</em>) – Switch for applying offset calibration. The default is True.</p></li>
+<li><p><strong>apply_calibration</strong> (<em>bool</em><em>, </em><em>optional</em>) – Switch for applying TDC and offset calibration. If set to ‘True’
+while apply_offset_calibration is set to ‘False’, only the TDC
+calibration is applied. The default is True.</p></li>
+<li><p><strong>absolute_timestamps</strong> (<em>bool</em><em>, </em><em>optional</em>) – Indicator for data with absolute timestamps. The default is
+False.</p></li>
+<li><p><strong>correct_pix_address</strong> (<em>bool</em><em>, </em><em>optional</em>) – Correct pixel address for the sensor half on side 23 of the
+daughterboard. The default is False.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>TypeError</strong> – Raised if “pixels” is not a list.</p></li>
+<li><p><strong>TypeError</strong> – Raised if “firmware_version” is not a string.</p></li>
+<li><p><strong>TypeError</strong> – Raised if “rewrite” is not a boolean.</p></li>
+<li><p><strong>TypeError</strong> – Raised if “daughterboard_number” is not a string.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="daplis.functions.delta_t.calculate_and_save_timestamp_differences_full_sensor">
+<span class="sig-prename descclassname"><span class="pre">daplis.functions.delta_t.</span></span><span class="sig-name descname"><span class="pre">calculate_and_save_timestamp_differences_full_sensor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pixels</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rewrite</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">daughterboard_number</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">motherboard_number1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">motherboard_number2</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">firmware_version</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timestamps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">512</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delta_window</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">50000.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">app_mask</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">include_offset</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">apply_calibration</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">absolute_timestamps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/daplis/functions/delta_t.html#calculate_and_save_timestamp_differences_full_sensor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#daplis.functions.delta_t.calculate_and_save_timestamp_differences_full_sensor" title="Link to this definition"></a></dt>
+<dd><p>Calculate and save timestamp differences into ‘.feather’ file.</p>
+<p>Unpacks data into a dictionary, calculates timestamp differences for
+the requested pixels and saves them into a ‘.feather’ table. Works with
+firmware version 2212. Analyzes data from both sensor halves/both
+FPGAs, hence the two input parameters for LinoSPAD2 motherboards.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path</strong> (<em>str</em>) – Path to where two folders with data from both motherboards
+are. The folders should be named after the motherboards.</p></li>
+<li><p><strong>pixels</strong> (<em>list</em>) – List of two pixels, one from each sensor half.</p></li>
+<li><p><strong>rewrite</strong> (<em>bool</em>) – switch for rewriting the plot if it already exists. used as a
+safeguard to avoid unwanted overwriting of the previous results.
+Switch for rewriting the ‘.feather’ file if it already exists.</p></li>
+<li><p><strong>daughterboard_number</strong> (<em>str</em>) – LinoSPAD2 daughterboard number.</p></li>
+<li><p><strong>motherboard_number1</strong> (<em>str</em>) – LinoSPAD2 motherboard (FPGA) number, including the ‘#’.</p></li>
+<li><p><strong>motherboard_number2</strong> (<em>str</em>) – Second LinoSPAD2 motherboard (FPGA) number.</p></li>
+<li><p><strong>firmware_version</strong> (<em>str</em>) – LinoSPAD2 firmware version. Versions “2212s” (skip) and “2212b”
+(block) are recognized.</p></li>
+<li><p><strong>timestamps</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of timestamps per acquisition cycle per pixel. The default
+is 512.</p></li>
+<li><p><strong>delta_window</strong> (<em>float</em><em>, </em><em>optional</em>) – Size of a window to which timestamp differences are compared.
+Differences in that window are saved. The default is 50e3 (50 ns).</p></li>
+<li><p><strong>app_mask</strong> (<em>bool</em><em>, </em><em>optional</em>) – Switch for applying the mask for hot pixels. The default is True.</p></li>
+<li><p><strong>include_offset</strong> (<em>bool</em><em>, </em><em>optional</em>) – Switch for applying offset calibration. The default is True.</p></li>
+<li><p><strong>apply_calibration</strong> (<em>bool</em><em>, </em><em>optional</em>) – Switch for applying TDC and offset calibration. If set to ‘True’
+while include_offset is set to ‘False’, only the TDC calibration is
+applied. The default is True.</p></li>
+<li><p><strong>absolute_timestamps</strong> (<em>bool</em><em>, </em><em>optional</em>) – Switch for unpacking data that were collected together with
+absolute timestamps. The default is False.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>TypeError</strong> – Only boolean values of ‘rewrite’ and string values of
+    ‘daughterboard_number’, ‘motherboard_number’, and ‘firmware_version’
+    are accepted. The first error is raised so that the plot does not
+    accidentally get rewritten in the case no clear input was given.</p></li>
+<li><p><strong>FileNotFoundError</strong> – Raised if data from the first LinoSPAD2 motherboard were not
+    found.</p></li>
+<li><p><strong>FileNotFoundError</strong> – Raised if data from the second LinoSPAD2 motherboard were not
+    found.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="daplis.functions.delta_t.calculate_and_save_timestamp_differences_full_sensor_alt">
+<span class="sig-prename descclassname"><span class="pre">daplis.functions.delta_t.</span></span><span class="sig-name descname"><span class="pre">calculate_and_save_timestamp_differences_full_sensor_alt</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pixels</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rewrite</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">daughterboard_number</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">motherboard_number1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">motherboard_number2</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">firmware_version</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timestamps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">512</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delta_window</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">50000.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threshold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">app_mask</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">include_offset</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">apply_calibration</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">absolute_timestamps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/daplis/functions/delta_t.html#calculate_and_save_timestamp_differences_full_sensor_alt"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#daplis.functions.delta_t.calculate_and_save_timestamp_differences_full_sensor_alt" title="Link to this definition"></a></dt>
+<dd><p>Calculate and save timestamp differences into ‘.feather’ file.</p>
+<p>Unpacks data into a dictionary, calculates timestamp differences for
+the requested pixels and saves them into a ‘.feather’ table. Works with
+firmware version 2212. Analyzes data from both sensor halves/both
+FPGAs, hence the two input parameters for LinoSPAD2 motherboards.
+Uses the threshold value to find the first cycle in each sensor half
+where the signal is above that value. Useful for when the signal
+is above zero right from the start of data collecting.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path</strong> (<em>str</em>) – Path to where two folders with data from both motherboards
+are. The folders should be named after the motherboards.</p></li>
+<li><p><strong>pixels</strong> (<em>list</em>) – List of two pixels, one from each sensor half.</p></li>
+<li><p><strong>rewrite</strong> (<em>bool</em>) – switch for rewriting the plot if it already exists. used as a
+safeguard to avoid unwanted overwriting of the previous results.
+Switch for rewriting the ‘.feather’ file if it already exists.</p></li>
+<li><p><strong>daughterboard_number</strong> (<em>str</em>) – LinoSPAD2 daughterboard number.</p></li>
+<li><p><strong>motherboard_number1</strong> (<em>str</em>) – First LinoSPAD2 motherboard (FPGA) number, including the ‘#’.</p></li>
+<li><p><strong>motherboard_number2</strong> (<em>str</em>) – Second LinoSPAD2 motherboard (FPGA) number, including the ‘#’.</p></li>
+<li><p><strong>firmware_version</strong> (<em>str</em>) – LinoSPAD2 firmware version. Versions “2212s” (skip) and “2212b”
+(block) are recognized.</p></li>
+<li><p><strong>timestamps</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of timestamps per acquisition cycle per pixel. The default
+is 512.</p></li>
+<li><p><strong>delta_window</strong> (<em>float</em><em>, </em><em>optional</em>) – Size of a window to which timestamp differences are compared.
+Differences in that window are saved. The default is 50e3 (50 ns).</p></li>
+<li><p><strong>threshold</strong> (<em>int</em><em>, </em><em>optional</em>) – Threshold for the number of timestamps per cycle in the given
+pixels that is used to find the specific cycle. With value of 0
+this will find the first cycle where there is any positive signal
+in the pixel, while a value of 15 will find first cycle when
+signal is above approx. 4 kHz strong. The default is 0.</p></li>
+<li><p><strong>app_mask</strong> (<em>bool</em><em>, </em><em>optional</em>) – Switch for applying the mask for hot pixels. The default is True.</p></li>
+<li><p><strong>include_offset</strong> (<em>bool</em><em>, </em><em>optional</em>) – Switch for applying offset calibration. The default is True.</p></li>
+<li><p><strong>apply_calibration</strong> (<em>bool</em><em>, </em><em>optional</em>) – Switch for applying TDC and offset calibration. If set to ‘True’
+while include_offset is set to ‘False’, only the TDC calibration is
+applied. The default is True.</p></li>
+<li><p><strong>absolute_timestamps</strong> (<em>bool</em><em>, </em><em>optional</em>) – Switch for unpacking data that were collected together with
+absolute timestamps. The default is False.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>TypeError</strong> – Only boolean values of ‘rewrite’ and string values of
+    ‘daughterboard_number’, ‘motherboard_number’, and ‘firmware_version’
+    are accepted. The first error is raised so that the plot does not
+    accidentally get rewritten in the case no clear input was given.</p></li>
+<li><p><strong>FileNotFoundError</strong> – Raised if data from the first LinoSPAD2 motherboard were not
+    found.</p></li>
+<li><p><strong>FileNotFoundError</strong> – Raised if data from the second LinoSPAD2 motherboard were not
+    found.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="daplis.functions.delta_t.collect_and_plot_timestamp_differences">
+<span class="sig-prename descclassname"><span class="pre">daplis.functions.delta_t.</span></span><span class="sig-name descname"><span class="pre">collect_and_plot_timestamp_differences</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pixels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rewrite</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ft_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">range_left</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">-10000.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">range_right</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10000.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">multiplier</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">same_y</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'rebeccapurple'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">correct_pix_address</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pickle_figure</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/daplis/functions/delta_t.html#collect_and_plot_timestamp_differences"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#daplis.functions.delta_t.collect_and_plot_timestamp_differences" title="Link to this definition"></a></dt>
+<dd><p>Collect and plot timestamp differences from a ‘.feather’ file.</p>
+<p>Plots timestamp differences from a ‘.feather’ file as a grid of histograms
+and as a single plot. The plot is saved in the ‘results/delta_t’ folder,
+which is created (if it does not already exist) in the same folder
+where data are.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path</strong> (<em>str</em>) – Path to the folder with ‘.dat’ data files.</p></li>
+<li><p><strong>pixels</strong> (<em>list</em>) – List of pixel numbers for which the timestamp differences
+should be plotted.</p></li>
+<li><p><strong>rewrite</strong> (<em>bool</em>) – switch for rewriting the plot if it already exists. used as a
+safeguard to avoid unwanted overwriting of the previous results.
+Switch for rewriting the plot if it already exists. Used as a
+safeguard to avoid unwanted overwriting of the previous results.</p></li>
+<li><p><strong>ft_file</strong> (<em>str</em><em>, </em><em>optional</em>) – Path to the feather file with timestamp differences. If used,
+the data files in the path are ignored. The default is None.</p></li>
+<li><p><strong>range_left</strong> (<em>int</em><em>, </em><em>optional</em>) – Lower limit for timestamp differences, lower values are not used.
+The default is -10e3.</p></li>
+<li><p><strong>range_right</strong> (<em>int</em><em>, </em><em>optional</em>) – Upper limit for timestamp differences, higher values are not used.
+The default is 10e3.</p></li>
+<li><p><strong>multiplier</strong> (<em>int</em><em>, </em><em>optional</em>) – Histogram binning multiplier. Can be used for coarser binning.
+The default is 1.</p></li>
+<li><p><strong>same_y</strong> (<em>bool</em><em>, </em><em>optional</em>) – Switch for plotting the histograms with the same y-axis.
+The default is False.</p></li>
+<li><p><strong>color</strong> (<em>str</em><em>, </em><em>optional</em>) – Color for the plot. The default is ‘rebeccapurple’.</p></li>
+<li><p><strong>correct_pix_address</strong> (<em>bool</em><em>, </em><em>optional</em>) – Correct pixel address for the sensor half on side 23 of the
+daughterboard. The default is False.</p></li>
+<li><p><strong>pickle_figure</strong> (<em>bool</em><em>, </em><em>optional</em>) – Switch for pickling the plot. Can be used to extract the plot
+data. The default is False.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>TypeError</strong> – Only boolean values of ‘rewrite’ are accepted. The error is
+    raised so that the plot does not accidentally gets rewritten.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="daplis.functions.delta_t.collect_and_plot_timestamp_differences_from_ft_file">
+<span class="sig-prename descclassname"><span class="pre">daplis.functions.delta_t.</span></span><span class="sig-name descname"><span class="pre">collect_and_plot_timestamp_differences_from_ft_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ft_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pixels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rewrite</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">range_left</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">-10000.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">range_right</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10000.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">multiplier</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">same_y</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'rebeccapurple'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/daplis/functions/delta_t.html#collect_and_plot_timestamp_differences_from_ft_file"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#daplis.functions.delta_t.collect_and_plot_timestamp_differences_from_ft_file" title="Link to this definition"></a></dt>
+<dd><p>Collect and plot timestamp differences from a ‘.feather’ file.</p>
+<p>Plots timestamp differences from a ‘.feather’ file as a grid of histograms
+and as a single plot. The plot is saved in the ‘results/delta_t’ folder,
+which is created (if it does not already exist) in the same folder
+where data are.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ft_file</strong> (<em>str</em>) – Absolute path to the feather file.</p></li>
+<li><p><strong>pixels</strong> (<em>list</em>) – List of pixel numbers for which the timestamp differences
+should be plotted.</p></li>
+<li><p><strong>rewrite</strong> (<em>bool</em>) – switch for rewriting the plot if it already exists. used as a
+safeguard to avoid unwanted overwriting of the previous results.
+Switch for rewriting the plot if it already exists. Used as a
+safeguard to avoid unwanted overwriting of the previous results.</p></li>
+<li><p><strong>range_left</strong> (<em>int</em><em>, </em><em>optional</em>) – Lower limit for timestamp differences, lower values are not used.
+The default is -10e3.</p></li>
+<li><p><strong>range_right</strong> (<em>int</em><em>, </em><em>optional</em>) – Upper limit for timestamp differences, higher values are not used.
+The default is 10e3.</p></li>
+<li><p><strong>multiplier</strong> (<em>int</em><em>, </em><em>optional</em>) – Histogram binning multiplier. Can be used for coarser binning.
+The default is 1.</p></li>
+<li><p><strong>same_y</strong> (<em>bool</em><em>, </em><em>optional</em>) – Switch for plotting the histograms with the same y-axis.
+The default is False.</p></li>
+<li><p><strong>color</strong> (<em>str</em><em>, </em><em>optional</em>) – Color for the plot. The default is ‘rebeccapurple’.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>TypeError</strong> – Only boolean values of ‘rewrite’ are accepted. The error is
+    raised so that the plot does not accidentally gets rewritten.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="daplis.functions.delta_t.collect_and_plot_timestamp_differences_full_sensor">
+<span class="sig-prename descclassname"><span class="pre">daplis.functions.delta_t.</span></span><span class="sig-name descname"><span class="pre">collect_and_plot_timestamp_differences_full_sensor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pixels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rewrite</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">range_left</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">-10000.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">range_right</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10000.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">multiplier</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">same_y</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'rebeccapurple'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/daplis/functions/delta_t.html#collect_and_plot_timestamp_differences_full_sensor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#daplis.functions.delta_t.collect_and_plot_timestamp_differences_full_sensor" title="Link to this definition"></a></dt>
+<dd><p>Collect and plot timestamp differences from a ‘.feather’ file.</p>
+<p>Plots timestamp differences from a ‘.feather’ file as a grid of
+histograms and as a single plot. The plot is saved in the
+‘results/delta_t’ folder, which is created (if it does not already
+exist) in the same folder where data are.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path</strong> (<em>str</em>) – Path to the folder with ‘.dat’ data files.</p></li>
+<li><p><strong>pixels</strong> (<em>list</em>) – List of pixel numbers for which the timestamp differences
+should be plotted.</p></li>
+<li><p><strong>rewrite</strong> (<em>bool</em>) – switch for rewriting the plot if it already exists. used as a
+safeguard to avoid unwanted overwriting of the previous results.
+Switch for rewriting the plot if it already exists. Used as a
+safeguard to avoid unwanted overwriting of the previous results.</p></li>
+<li><p><strong>range_left</strong> (<em>int</em><em>, </em><em>optional</em>) – Lower limit for timestamp differences, lower values are not used.
+The default is -10e3.</p></li>
+<li><p><strong>range_right</strong> (<em>int</em><em>, </em><em>optional</em>) – Upper limit for timestamp differences, higher values are not used.
+The default is 10e3.</p></li>
+<li><p><strong>multiplier</strong> (<em>int</em><em>, </em><em>optional</em>) – Histogram binning multiplier. Can be used for coarser binning.
+The default is 1.</p></li>
+<li><p><strong>same_y</strong> (<em>bool</em><em>, </em><em>optional</em>) – Switch for plotting the histograms with the same y-axis.
+The default is False.</p></li>
+<li><p><strong>color</strong> (<em>str</em><em>, </em><em>optional</em>) – Color for the plot. The default is ‘rebeccapurple’.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>TypeError</strong> – Only boolean values of ‘rewrite’ are accepted. The error is
+    raised so that the plot does not accidentally gets rewritten.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="daplis.functions.delta_t.unpickle_plot">
+<span class="sig-prename descclassname"><span class="pre">daplis.functions.delta_t.</span></span><span class="sig-name descname"><span class="pre">unpickle_plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">delta_t_pickle_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="_modules/daplis/functions/delta_t.html#unpickle_plot"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#daplis.functions.delta_t.unpickle_plot" title="Link to this definition"></a></dt>
+<dd><p>Unpickle a saved figure and return plot data.</p>
+<p>Load a pickled figure, extract and return the data for each subplot
+found.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>delta_t_pickle_file</strong> (<em>str</em>) – The absolute path to the pickle file with the histogram plot.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A tuple containing:
+- fig (matplotlib.figure.Figure): The unpickled figure object.
+- plot_data (dict): A dictionary with keys “Histogram_i,j” where
+i,j are the pixels that were used for the particular histogram
+where each value is a tuple of x and y data for the
+corresponding bar plot.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>FileNotFoundError</strong> – If the specified pickle file does not exist, a FileNotFoundError
+    is raised and an error message is printed.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="daplis.functions.cross_talk.html" class="btn btn-neutral float-left" title="daplis.functions.cross_talk module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="daplis.functions.fits.html" class="btn btn-neutral float-right" title="daplis.functions.fits module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Sergei Kulkov.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

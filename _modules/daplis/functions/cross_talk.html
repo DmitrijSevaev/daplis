@@ -1,0 +1,1513 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>daplis.functions.cross_talk &mdash; Data Analysis Package for LinoSPAD2 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=8d563738"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Data Analysis Package for LinoSPAD2
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation and dependencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../daplis.html">daplis functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contribute.html">How to contribute</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../license.html">License and contact info</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../acknowledgement.html">Acknowledgement</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Data Analysis Package for LinoSPAD2</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">daplis.functions.cross_talk</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for daplis.functions.cross_talk</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Module for analyzing cross-talk of LinoSPAD2.</span>
+
+<span class="sd">A set of functions to calculate and save, collect and plot the</span>
+<span class="sd">cross-talk data for the given data sets.</span>
+
+<span class="sd">This file can also be imported as a module and contains the following</span>
+<span class="sd">functions:</span>
+
+<span class="sd">    * collect_dcr_by_file - calculate the DCR for each file in the</span>
+<span class="sd">    given folder and save the result into a .pkl file. Calculate</span>
+<span class="sd">    average and median DCR with and without masking the hot pixels.</span>
+
+<span class="sd">    * plot_dcr_histogram_and_stability - plot the DCR vs file to check</span>
+<span class="sd">    setup stability, and plot histogram of DCR averaged over files</span>
+<span class="sd">    together with integral over pixels</span>
+
+<span class="sd">    * zero_to_cross_talk_collect - collect timestamp differences from</span>
+<span class="sd">    the &#39;.dat&#39; with the cross-talk data (preferably, noise only).</span>
+<span class="sd">    Timestamp differences are collected for the given hot pixels plus</span>
+<span class="sd">    20 pixels to each side of the hot pixel where it is possible. The</span>
+<span class="sd">    result is saved into a &#39;.feather&#39; file.</span>
+
+<span class="sd">    * zero_to_cross_talk_plot - collect the timestamp differences from</span>
+<span class="sd">    the &#39;.feather&#39; file and plot the cross-talk peaks applying a </span>
+<span class="sd">    Gaussian fit where possible, plot the average cross-talk probability</span>
+<span class="sd">    vs distance from the hot pixel for each pair of aggressor-victim</span>
+<span class="sd">    pixels, and finally plot the average cross-talk probability</span>
+<span class="sd">    for the whole sensor half.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">glob</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">pickle</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+<span class="kn">from</span> <span class="nn">pyarrow</span> <span class="kn">import</span> <span class="n">feather</span> <span class="k">as</span> <span class="n">ft</span>
+<span class="kn">from</span> <span class="nn">scipy.optimize</span> <span class="kn">import</span> <span class="n">curve_fit</span>
+<span class="kn">from</span> <span class="nn">tqdm</span> <span class="kn">import</span> <span class="n">tqdm</span>
+
+<span class="kn">from</span> <span class="nn">daplis.functions</span> <span class="kn">import</span> <span class="n">calc_diff</span> <span class="k">as</span> <span class="n">cd</span>
+<span class="kn">from</span> <span class="nn">daplis.functions</span> <span class="kn">import</span> <span class="n">sensor_plot</span>
+<span class="kn">from</span> <span class="nn">daplis.functions</span> <span class="kn">import</span> <span class="n">unpack</span> <span class="k">as</span> <span class="n">f_up</span>
+<span class="kn">from</span> <span class="nn">daplis.functions</span> <span class="kn">import</span> <span class="n">utils</span>
+
+
+<span class="k">def</span> <span class="nf">_collect_cross_talk</span><span class="p">(</span>
+    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">pixels</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+    <span class="n">rewrite</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+    <span class="n">daughterboard_number</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">motherboard_number</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">firmware_version</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">timestamps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
+    <span class="n">delta_window</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">50e3</span><span class="p">,</span>
+    <span class="n">include_offset</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">apply_calibration</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">absolute_timestamps</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">correct_pix_address</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Collect timestamp differences from cross-talk data.</span>
+
+<span class="sd">    Collect timestamp differences from cross-talk data for the given</span>
+<span class="sd">    list of pixels.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    path : str</span>
+<span class="sd">        Path to the folder with &#39;.dat&#39; data files.</span>
+<span class="sd">    pixels : List[int]</span>
+<span class="sd">        List of pixels to collect timestamp differences for, where the</span>
+<span class="sd">        first pixel is the aggressor.</span>
+<span class="sd">    rewrite : bool</span>
+<span class="sd">        Switch for rewriting the &#39;.feather&#39; file with timestamp</span>
+<span class="sd">        differences. Used for conscious start of an hours-long data</span>
+<span class="sd">        processing and avoiding rewriting/deleting already existing</span>
+<span class="sd">        files.</span>
+<span class="sd">    daughterboard_number : str</span>
+<span class="sd">        LinoSPAD2 daughterboard number.</span>
+<span class="sd">    motherboard_number : str</span>
+<span class="sd">        LinoSPAD2 motherboard (FPGA) number, including the &#39;#&#39;.</span>
+<span class="sd">    firmware_version : str</span>
+<span class="sd">        LinoSPAD2 firmware version.</span>
+<span class="sd">    timestamps : int, optional</span>
+<span class="sd">        Number of timestamps per TDC per cycle used during data</span>
+<span class="sd">        collection. The default is 1000.</span>
+<span class="sd">    include_offset : bool</span>
+<span class="sd">        Switch for including the offset calibration.</span>
+<span class="sd">    delta_window : float, optional</span>
+<span class="sd">        Window size for collecting timestamp differences. The default</span>
+<span class="sd">        is 50e3.</span>
+<span class="sd">    apply_calibration : bool, optional</span>
+<span class="sd">        If True, apply calibration to the collected data. The default</span>
+<span class="sd">        is True.</span>
+<span class="sd">    absolute_timestamps : bool, optional</span>
+<span class="sd">        Indicator of data collected with absolute timestamps. The</span>
+<span class="sd">        default is False.</span>
+<span class="sd">    correct_pix_address : bool, optional</span>
+<span class="sd">        Correct pixel address for the FPGA board on side 23. Here</span>
+<span class="sd">        used to reverse the correction. The default is False.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    TypeError</span>
+<span class="sd">        Raised if any of the following conditions are met:</span>
+<span class="sd">        - `pixels` is not a list of integers,</span>
+<span class="sd">        - `firmware_version` is not recognized,</span>
+<span class="sd">        - `rewrite` is not boolean,</span>
+<span class="sd">        - `daughterboard_number` is not a string.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># parameter type check</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">pixels</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+            <span class="s2">&quot;&#39;pixels&#39; should be a list of integers or a list of two lists&quot;</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">firmware_version</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+            <span class="s2">&quot;&#39;firmware_version&#39; should be string, &#39;2212s&#39;, &#39;2212b&#39; or &#39;2208&#39;&quot;</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">rewrite</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;&#39;rewrite&#39; should be boolean&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">daughterboard_number</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;&#39;daughterboard_number&#39; should be string&quot;</span><span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+
+    <span class="c1"># If requested, get the correct pixel address - must be used</span>
+    <span class="c1"># for the motherboard on side &#39;23&#39;</span>
+    <span class="k">if</span> <span class="n">correct_pix_address</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">pixel</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">pixels</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">pixel</span> <span class="o">&gt;</span> <span class="mi">127</span><span class="p">:</span>
+                <span class="n">pixels</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mi">255</span> <span class="o">-</span> <span class="n">pixels</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">pixels</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">pixels</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="mi">128</span>
+
+    <span class="c1"># files_all = sorted(glob.glob(&quot;*.dat*&quot;))</span>
+    <span class="n">files_all</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s2">&quot;*.dat*&quot;</span><span class="p">)</span>
+    <span class="n">files_all</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">getmtime</span><span class="p">)</span>
+
+    <span class="n">out_file_name</span> <span class="o">=</span> <span class="n">files_all</span><span class="p">[</span><span class="mi">0</span><span class="p">][:</span><span class="o">-</span><span class="mi">4</span><span class="p">]</span> <span class="o">+</span> <span class="s2">&quot;-&quot;</span> <span class="o">+</span> <span class="n">files_all</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][:</span><span class="o">-</span><span class="mi">4</span><span class="p">]</span>
+
+    <span class="n">feather_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+        <span class="n">path</span><span class="p">,</span>
+        <span class="s2">&quot;cross_talk_data&quot;</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">out_file_name</span><span class="si">}</span><span class="s2">_pixels_</span><span class="si">{</span><span class="n">pixels</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">pixels</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">.feather&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">utils</span><span class="o">.</span><span class="n">file_rewrite_handling</span><span class="p">(</span><span class="n">feather_file</span><span class="p">,</span> <span class="n">rewrite</span><span class="p">)</span>
+
+    <span class="c1"># Define matrix of pixel coordinates, where rows are numbers of TDCs</span>
+    <span class="c1"># and columns are the pixels that connected to these TDCs</span>
+    <span class="k">if</span> <span class="n">firmware_version</span> <span class="o">==</span> <span class="s2">&quot;2212s&quot;</span><span class="p">:</span>
+        <span class="n">pix_coor</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">256</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">64</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
+    <span class="k">elif</span> <span class="n">firmware_version</span> <span class="o">==</span> <span class="s2">&quot;2212b&quot;</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span>
+            <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">For firmware version &#39;2212b&#39; cross-talk numbers &quot;</span>
+            <span class="s2">&quot;would be incorrect, try data collected with &#39;2212s&#39;&quot;</span>
+        <span class="p">)</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Firmware version is not recognized.&quot;</span><span class="p">)</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">()</span>
+
+    <span class="n">pixels_formatted</span> <span class="o">=</span> <span class="p">[[</span><span class="n">pixels</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span> <span class="n">pixels</span><span class="p">[</span><span class="mi">1</span><span class="p">:]]</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">files_all</span><span class="p">)),</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Collecting data&quot;</span><span class="p">):</span>
+        <span class="n">file</span> <span class="o">=</span> <span class="n">files_all</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+
+        <span class="c1"># Prepare a dictionary for output</span>
+        <span class="n">deltas_all</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="c1"># Unpack data for the requested pixels into dictionary</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">absolute_timestamps</span><span class="p">:</span>
+            <span class="n">data_all</span> <span class="o">=</span> <span class="n">f_up</span><span class="o">.</span><span class="n">unpack_binary_data</span><span class="p">(</span>
+                <span class="n">file</span><span class="p">,</span>
+                <span class="n">daughterboard_number</span><span class="p">,</span>
+                <span class="n">motherboard_number</span><span class="p">,</span>
+                <span class="n">firmware_version</span><span class="p">,</span>
+                <span class="n">timestamps</span><span class="p">,</span>
+                <span class="n">include_offset</span><span class="p">,</span>
+                <span class="n">apply_calibration</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">data_all</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">f_up</span><span class="o">.</span><span class="n">unpack_binary_data_with_absolute_timestamps</span><span class="p">(</span>
+                <span class="n">file</span><span class="p">,</span>
+                <span class="n">daughterboard_number</span><span class="p">,</span>
+                <span class="n">motherboard_number</span><span class="p">,</span>
+                <span class="n">firmware_version</span><span class="p">,</span>
+                <span class="n">timestamps</span><span class="p">,</span>
+                <span class="n">include_offset</span><span class="p">,</span>
+                <span class="n">apply_calibration</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Collect timestamp differences for the given pixels</span>
+        <span class="c1"># deltas_all = cd.calculate_differences_2212(</span>
+        <span class="c1">#     data_all, pixels_formatted, pix_coor, delta_window</span>
+        <span class="c1"># )</span>
+        <span class="n">deltas_all</span> <span class="o">=</span> <span class="n">cd</span><span class="o">.</span><span class="n">calculate_differences_2212_fast</span><span class="p">(</span>
+            <span class="n">data_all</span><span class="p">,</span> <span class="n">pixels_formatted</span><span class="p">,</span> <span class="n">pix_coor</span><span class="p">,</span> <span class="n">delta_window</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Save data as a .feather file in a cycle so data is not lost</span>
+        <span class="c1"># in the case of failure close to the end</span>
+        <span class="n">data_for_plot_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">deltas_all</span><span class="p">,</span> <span class="n">orient</span><span class="o">=</span><span class="s2">&quot;index&quot;</span><span class="p">)</span>
+        <span class="k">del</span> <span class="n">deltas_all</span>
+        <span class="n">data_for_plot_df</span> <span class="o">=</span> <span class="n">data_for_plot_df</span><span class="o">.</span><span class="n">T</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="s2">&quot;cross_talk_data&quot;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">FileNotFoundError</span><span class="p">:</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="s2">&quot;cross_talk_data&quot;</span><span class="p">)</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="s2">&quot;cross_talk_data&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Check if feather file exists</span>
+        <span class="n">feather_file</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">out_file_name</span><span class="si">}</span><span class="s2">_pixels_</span><span class="si">{</span><span class="n">pixels</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">pixels</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">.feather&quot;</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">feather_file</span><span class="p">):</span>
+            <span class="c1"># Load existing feather file</span>
+            <span class="n">existing_data</span> <span class="o">=</span> <span class="n">ft</span><span class="o">.</span><span class="n">read_feather</span><span class="p">(</span><span class="n">feather_file</span><span class="p">)</span>
+
+            <span class="c1"># Append new data to the existing feather file</span>
+            <span class="n">combined_data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span>
+                <span class="p">[</span><span class="n">existing_data</span><span class="p">,</span> <span class="n">data_for_plot_df</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span>
+            <span class="p">)</span>
+            <span class="n">ft</span><span class="o">.</span><span class="n">write_feather</span><span class="p">(</span><span class="n">combined_data</span><span class="p">,</span> <span class="n">feather_file</span><span class="p">)</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Save as a new feather file</span>
+            <span class="n">ft</span><span class="o">.</span><span class="n">write_feather</span><span class="p">(</span><span class="n">data_for_plot_df</span><span class="p">,</span> <span class="n">feather_file</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="s2">&quot;..&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Check, if the file was created</span>
+    <span class="k">if</span> <span class="p">(</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span>
+            <span class="n">path</span> <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;/cross_talk_data/</span><span class="si">{</span><span class="n">out_file_name</span><span class="si">}</span><span class="s2">_pixels_&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">pixels</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">pixels</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">.feather&quot;</span>
+        <span class="p">)</span>
+        <span class="ow">is</span> <span class="kc">True</span>
+    <span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span>
+            <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&gt; &gt; &gt; Timestamp differences are saved as&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">out_file_name</span><span class="si">}</span><span class="s2">_pixels_</span><span class="si">{</span><span class="n">pixels</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">pixels</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">.feather in &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;cross_talk_data&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2"> &lt; &lt; &lt;&quot;</span>
+        <span class="p">)</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;File wasn&#39;t generated. Check input parameters.&quot;</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_plot_cross_talk_peaks</span><span class="p">(</span>
+    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">pixels</span><span class="p">:</span> <span class="n">List</span><span class="p">,</span>
+    <span class="n">multiplier</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">window</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">50e3</span><span class="p">,</span>
+    <span class="n">senpop</span><span class="p">:</span> <span class="nb">list</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">pix_on_left</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">feather_file_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="n">show_plots</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Plot cross-talk peaks and calculate peak population.</span>
+
+<span class="sd">    Plots a histogram of timestamp differences collected from the</span>
+<span class="sd">    cross-talk data, fits using Gaussian to extract sigma and peak</span>
+<span class="sd">    position. These two numbers are then used to calculate the peak</span>
+<span class="sd">    population as numbers of data points in a +/- 2*sigma window</span>
+<span class="sd">    around the peak position minus background in the same window.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    path : str</span>
+<span class="sd">        Path to the folder with the &#39;.dat&#39; data files.</span>
+<span class="sd">    pixels : list</span>
+<span class="sd">        List of pixel number to plot cross-talk peaks for. The first</span>
+<span class="sd">        one is the aggressor pixel.</span>
+<span class="sd">    multiplier : int</span>
+<span class="sd">        Multiplier of the LinoSPAD2 average timing bin of 17.857 ps for</span>
+<span class="sd">        histograms of the timestamp differences.</span>
+<span class="sd">    window : float</span>
+<span class="sd">        Window length for the histogram range. The default is 50e3.</span>
+<span class="sd">    senpop : list</span>
+<span class="sd">        List with numbers of timestamps per pixel.</span>
+<span class="sd">    pix_on_left : bool, optional</span>
+<span class="sd">        Indicator of pixels to the left of the aggressor. The default is False.</span>
+<span class="sd">    feather_file_name : str, optional</span>
+<span class="sd">        Naming pattern of the feather files that can be used when</span>
+<span class="sd">        actual data files are not available. The pattern should</span>
+<span class="sd">        include the number of the first and the last data files, e.g.,</span>
+<span class="sd">        &quot;0000010000-0000012000&quot;. The default is &quot;&quot;.</span>
+<span class="sd">    show_plots : bool, optional</span>
+<span class="sd">        Switch for showing the plots at the end. The default is False.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    dict, dict</span>
+<span class="sd">        Two dictionaries with distances in pixels from the aggressor</span>
+<span class="sd">        pixel, where the first dictionary contains cross-talk</span>
+<span class="sd">        probabilities and the second - the corresponding errors.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">feather_file_name</span> <span class="o">==</span> <span class="s2">&quot;&quot;</span><span class="p">:</span>
+        <span class="n">files_all1</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s2">&quot;*.dat&quot;</span><span class="p">)</span>
+        <span class="n">files_all1</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">getmtime</span><span class="p">)</span>
+        <span class="n">ft_file_name</span> <span class="o">=</span> <span class="n">files_all1</span><span class="p">[</span><span class="mi">0</span><span class="p">][:</span><span class="o">-</span><span class="mi">4</span><span class="p">]</span> <span class="o">+</span> <span class="s2">&quot;-&quot;</span> <span class="o">+</span> <span class="n">files_all1</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][:</span><span class="o">-</span><span class="mi">4</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">ft_file_name</span> <span class="o">=</span> <span class="n">feather_file_name</span>
+
+    <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;cross_talk_data&quot;</span><span class="p">))</span>
+
+    <span class="n">ft_file</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">ft_file_name</span><span class="si">}</span><span class="s2">_*</span><span class="si">{</span><span class="n">pixels</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span> <span class="sa">f</span><span class="s2">&quot;-</span><span class="si">{</span><span class="n">pixels</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">*.feather&quot;</span>
+    <span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="n">ct_output</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">ct_err_output</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">pix</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">pixels</span><span class="p">[</span><span class="mi">1</span><span class="p">:]):</span>
+        <span class="k">if</span> <span class="n">pix_on_left</span><span class="p">:</span>
+
+            <span class="n">data_pix</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">ft</span><span class="o">.</span><span class="n">read_feather</span><span class="p">(</span><span class="n">ft_file</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">pix</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="n">pixels</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">])</span>
+                <span class="o">.</span><span class="n">dropna</span><span class="p">()</span>
+                <span class="o">.</span><span class="n">values</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">data_pix</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">ft</span><span class="o">.</span><span class="n">read_feather</span><span class="p">(</span><span class="n">ft_file</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">pixels</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="n">pix</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">])</span>
+                <span class="o">.</span><span class="n">dropna</span><span class="p">()</span>
+                <span class="o">.</span><span class="n">values</span>
+            <span class="p">)</span>
+
+        <span class="n">data_cut</span> <span class="o">=</span> <span class="n">data_pix</span><span class="p">[(</span><span class="n">data_pix</span> <span class="o">&gt;</span> <span class="o">-</span><span class="n">window</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">data_pix</span> <span class="o">&lt;</span> <span class="n">window</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)]</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">data_cut</span><span class="o">.</span><span class="n">any</span><span class="p">()</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+            <span class="k">continue</span>
+        <span class="n">counts</span><span class="p">,</span> <span class="n">bin_edges</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">histogram</span><span class="p">(</span>
+            <span class="n">data_cut</span><span class="p">,</span>
+            <span class="n">bins</span><span class="o">=</span><span class="p">(</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span>
+                    <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">data_cut</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">data_cut</span><span class="p">),</span> <span class="n">multiplier</span> <span class="o">*</span> <span class="mi">2500</span> <span class="o">/</span> <span class="mi">140</span>
+                <span class="p">)</span>
+            <span class="p">),</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">counts</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">bin_centers</span> <span class="o">=</span> <span class="p">(</span><span class="n">bin_edges</span> <span class="o">-</span> <span class="n">multiplier</span> <span class="o">*</span> <span class="mi">2500</span> <span class="o">/</span> <span class="mi">140</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)[</span><span class="mi">1</span><span class="p">:]</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">params</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">curve_fit</span><span class="p">(</span>
+                <span class="n">utils</span><span class="o">.</span><span class="n">gaussian</span><span class="p">,</span>
+                <span class="n">bin_centers</span><span class="p">,</span>
+                <span class="n">counts</span><span class="p">,</span>
+                <span class="n">p0</span><span class="o">=</span><span class="p">[</span>
+                    <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">counts</span><span class="p">),</span>
+                    <span class="n">bin_centers</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">counts</span><span class="p">)],</span>
+                    <span class="mi">100</span><span class="p">,</span>
+                    <span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">counts</span><span class="p">),</span>
+                <span class="p">],</span>
+            <span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">RuntimeError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">):</span>
+            <span class="k">continue</span>
+
+        <span class="c1"># Cross-talk probability estimation</span>
+        <span class="k">if</span> <span class="n">senpop</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">aggressor_pix_tmsps</span> <span class="o">=</span> <span class="n">senpop</span><span class="p">[</span><span class="n">pixels</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+            <span class="n">victim_pix_tmsps</span> <span class="o">=</span> <span class="n">senpop</span><span class="p">[</span><span class="n">pix</span><span class="p">]</span>
+
+            <span class="n">peak_population</span> <span class="o">=</span> <span class="n">data_cut</span><span class="p">[</span>
+                <span class="p">(</span><span class="n">data_cut</span> <span class="o">&gt;</span> <span class="n">params</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">params</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">*</span> <span class="mi">2</span><span class="p">)</span>
+                <span class="o">&amp;</span> <span class="p">(</span><span class="n">data_cut</span> <span class="o">&lt;</span> <span class="n">params</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">params</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">*</span> <span class="mi">2</span><span class="p">)</span>
+            <span class="p">]</span>
+            <span class="n">bckg</span> <span class="o">=</span> <span class="n">data_cut</span><span class="p">[</span>
+                <span class="p">(</span><span class="n">data_cut</span> <span class="o">&gt;</span> <span class="n">params</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mf">15e3</span> <span class="o">-</span> <span class="n">params</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">*</span> <span class="mi">2</span><span class="p">)</span>
+                <span class="o">&amp;</span> <span class="p">(</span><span class="n">data_cut</span> <span class="o">&lt;</span> <span class="n">params</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mf">15e3</span> <span class="o">+</span> <span class="n">params</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">*</span> <span class="mi">2</span><span class="p">)</span>
+            <span class="p">]</span>
+            <span class="n">peak_population_err</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">peak_population</span><span class="p">))</span>
+            <span class="n">bckg_err</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">bckg</span><span class="p">))</span>
+
+            <span class="n">CT</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">peak_population</span><span class="p">)</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">bckg</span><span class="p">))</span>
+                <span class="o">*</span> <span class="mi">100</span>
+                <span class="o">/</span> <span class="p">(</span><span class="n">aggressor_pix_tmsps</span> <span class="o">+</span> <span class="n">victim_pix_tmsps</span><span class="p">)</span>
+            <span class="p">)</span>
+
+            <span class="n">CT_err</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">peak_population_err</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">bckg_err</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+                <span class="o">*</span> <span class="mi">100</span>
+                <span class="o">/</span> <span class="p">(</span><span class="n">aggressor_pix_tmsps</span> <span class="o">+</span> <span class="n">victim_pix_tmsps</span><span class="p">)</span>
+            <span class="p">)</span>
+
+        <span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;font.size&quot;</span><span class="p">:</span> <span class="mi">27</span><span class="p">})</span>
+        <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">bin_centers</span><span class="p">,</span> <span class="n">counts</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;rebeccapurple&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Data&quot;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+            <span class="n">bin_centers</span><span class="p">,</span>
+            <span class="n">utils</span><span class="o">.</span><span class="n">gaussian</span><span class="p">(</span><span class="n">bin_centers</span><span class="p">,</span> <span class="o">*</span><span class="n">params</span><span class="p">),</span>
+            <span class="n">color</span><span class="o">=</span><span class="s2">&quot;darkorange&quot;</span><span class="p">,</span>
+            <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Fit&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">senpop</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Cross-talk peak, pixels </span><span class="si">{</span><span class="n">pixels</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="n">pix</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;Cross-talk is </span><span class="si">{</span><span class="n">CT</span><span class="si">:</span><span class="s2">.1e</span><span class="si">}</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\u00B1</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">CT_err</span><span class="si">:</span><span class="s2">.1e</span><span class="si">}</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="s2">&quot;%&quot;</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Cross-talk peak, pixels </span><span class="si">{</span><span class="n">pixels</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="n">pix</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\u0394</span><span class="s2">t (ps)&quot;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;# of coincidences (-)&quot;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;results/ct_fit&quot;</span><span class="p">))</span>
+        <span class="k">except</span> <span class="ne">FileNotFoundError</span> <span class="k">as</span> <span class="n">_</span><span class="p">:</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;results/ct_fit&quot;</span><span class="p">))</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;results/ct_fit&quot;</span><span class="p">))</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;CT_fit_pixels_</span><span class="si">{</span><span class="n">pixels</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="n">pix</span><span class="si">}</span><span class="s2">.png&quot;</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;cross_talk_data&quot;</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">show_plots</span><span class="p">:</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="n">fig</span><span class="p">)</span>
+
+        <span class="n">ct_output</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">pixels</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="w"> </span><span class="n">pix</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">CT</span>
+        <span class="n">ct_err_output</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">pixels</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="w"> </span><span class="n">pix</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">CT_err</span>
+
+    <span class="k">return</span> <span class="n">ct_output</span><span class="p">,</span> <span class="n">ct_err_output</span>
+
+
+<span class="k">def</span> <span class="nf">_plot_cross_talk_grid</span><span class="p">(</span>
+    <span class="n">path</span><span class="p">,</span>
+    <span class="n">pixels</span><span class="p">,</span>
+    <span class="n">multiplier</span><span class="p">,</span>
+    <span class="n">window</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mf">50e3</span><span class="p">,</span>
+    <span class="n">pix_on_left</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">feather_file_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="n">show_plots</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Plot grid of 4x5 of cross-talk peaks.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    path : str</span>
+<span class="sd">        Path to data files.</span>
+<span class="sd">    pixels : list</span>
+<span class="sd">        List of pixels to plot the grid for. The first is the aggressor</span>
+<span class="sd">        pixel.</span>
+<span class="sd">    multiplier : int</span>
+<span class="sd">        Multiplier of the LinoSPAD2 average timing bin of 17.857 ps for</span>
+<span class="sd">        the histograms.</span>
+<span class="sd">    window : int, optional</span>
+<span class="sd">        Window size for the histogram range. The default is 50e3.</span>
+<span class="sd">    pix_on_left : bool, optional</span>
+<span class="sd">        Indicator that pixels provided are to the left of the aggressor.</span>
+<span class="sd">        The default is False.</span>
+<span class="sd">    feather_file_name : str, optional</span>
+<span class="sd">        Naming pattern of the feather files that can be used when</span>
+<span class="sd">        actual data files are not available. The pattern should</span>
+<span class="sd">        include the number of the first and the last data files, e.g.,</span>
+<span class="sd">        &quot;0000010000-0000012000&quot;. The default is &quot;&quot;.</span>
+<span class="sd">    show_plots : bool, optional</span>
+<span class="sd">        Switch for showing the plots at the end. The default is False.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">feather_file_name</span> <span class="o">==</span> <span class="s2">&quot;&quot;</span><span class="p">:</span>
+        <span class="n">files_all1</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s2">&quot;*.dat&quot;</span><span class="p">)</span>
+        <span class="n">files_all1</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">getmtime</span><span class="p">)</span>
+        <span class="n">ft_file_name</span> <span class="o">=</span> <span class="n">files_all1</span><span class="p">[</span><span class="mi">0</span><span class="p">][:</span><span class="o">-</span><span class="mi">4</span><span class="p">]</span> <span class="o">+</span> <span class="s2">&quot;-&quot;</span> <span class="o">+</span> <span class="n">files_all1</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][:</span><span class="o">-</span><span class="mi">4</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">ft_file_name</span> <span class="o">=</span> <span class="n">feather_file_name</span>
+
+    <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;cross_talk_data&quot;</span><span class="p">))</span>
+
+    <span class="n">ft_file</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">ft_file_name</span><span class="si">}</span><span class="s2">_*</span><span class="si">{</span><span class="n">pixels</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">pixels</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">*.feather&quot;</span><span class="p">)[</span>
+        <span class="mi">0</span>
+    <span class="p">]</span>
+
+    <span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;font.size&quot;</span><span class="p">:</span> <span class="mi">27</span><span class="p">})</span>
+
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">pix</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">pixels</span><span class="p">[</span><span class="mi">1</span><span class="p">:]):</span>
+        <span class="k">if</span> <span class="n">pix_on_left</span><span class="p">:</span>
+            <span class="n">data_pix</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">ft</span><span class="o">.</span><span class="n">read_feather</span><span class="p">(</span><span class="n">ft_file</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">pix</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="n">pixels</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">])</span>
+                <span class="o">.</span><span class="n">dropna</span><span class="p">()</span>
+                <span class="o">.</span><span class="n">values</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">data_pix</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">ft</span><span class="o">.</span><span class="n">read_feather</span><span class="p">(</span><span class="n">ft_file</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">pixels</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="n">pix</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">])</span>
+                <span class="o">.</span><span class="n">dropna</span><span class="p">()</span>
+                <span class="o">.</span><span class="n">values</span>
+            <span class="p">)</span>
+
+        <span class="n">data_cut</span> <span class="o">=</span> <span class="n">data_pix</span><span class="p">[(</span><span class="n">data_pix</span> <span class="o">&gt;</span> <span class="o">-</span><span class="n">window</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">data_pix</span> <span class="o">&lt;</span> <span class="n">window</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)]</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">data_cut</span><span class="o">.</span><span class="n">any</span><span class="p">()</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+            <span class="k">continue</span>
+        <span class="n">counts</span><span class="p">,</span> <span class="n">bin_edges</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">histogram</span><span class="p">(</span>
+            <span class="n">data_cut</span><span class="p">,</span>
+            <span class="n">bins</span><span class="o">=</span><span class="p">(</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span>
+                    <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">data_cut</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">data_cut</span><span class="p">),</span> <span class="n">multiplier</span> <span class="o">*</span> <span class="mi">2500</span> <span class="o">/</span> <span class="mi">140</span>
+                <span class="p">)</span>
+            <span class="p">),</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">counts</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">bin_centers</span> <span class="o">=</span> <span class="p">(</span><span class="n">bin_edges</span> <span class="o">-</span> <span class="n">multiplier</span> <span class="o">*</span> <span class="mi">2500</span> <span class="o">/</span> <span class="mi">140</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)[</span><span class="mi">1</span><span class="p">:]</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">params</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">curve_fit</span><span class="p">(</span>
+                <span class="n">utils</span><span class="o">.</span><span class="n">gaussian</span><span class="p">,</span>
+                <span class="n">bin_centers</span><span class="p">,</span>
+                <span class="n">counts</span><span class="p">,</span>
+                <span class="n">p0</span><span class="o">=</span><span class="p">[</span>
+                    <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">counts</span><span class="p">),</span>
+                    <span class="n">bin_centers</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">counts</span><span class="p">)],</span>
+                    <span class="mi">100</span><span class="p">,</span>
+                    <span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">counts</span><span class="p">),</span>
+                <span class="p">],</span>
+            <span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">RuntimeError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">):</span>
+            <span class="k">continue</span>
+
+        <span class="k">if</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">5</span><span class="p">:</span>
+            <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">bin_centers</span><span class="p">,</span> <span class="n">counts</span><span class="p">,</span> <span class="s2">&quot;.&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;rebeccapurple&quot;</span><span class="p">)</span>
+            <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+                <span class="n">bin_centers</span><span class="p">,</span>
+                <span class="n">utils</span><span class="o">.</span><span class="n">gaussian</span><span class="p">(</span><span class="n">bin_centers</span><span class="p">,</span> <span class="o">*</span><span class="n">params</span><span class="p">),</span>
+                <span class="s2">&quot;--&quot;</span><span class="p">,</span>
+                <span class="n">color</span><span class="o">=</span><span class="s2">&quot;darkorange&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">([])</span>
+            <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">set_yticks</span><span class="p">([])</span>
+            <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">pixels</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="n">pix</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">i</span> <span class="o">&gt;=</span> <span class="mi">5</span> <span class="ow">and</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">10</span><span class="p">:</span>
+            <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="n">i</span> <span class="o">%</span> <span class="mi">5</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+                <span class="n">bin_centers</span><span class="p">,</span> <span class="n">counts</span><span class="p">,</span> <span class="s2">&quot;.&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;rebeccapurple&quot;</span>
+            <span class="p">)</span>
+            <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="n">i</span> <span class="o">%</span> <span class="mi">5</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+                <span class="n">bin_centers</span><span class="p">,</span>
+                <span class="n">utils</span><span class="o">.</span><span class="n">gaussian</span><span class="p">(</span><span class="n">bin_centers</span><span class="p">,</span> <span class="o">*</span><span class="n">params</span><span class="p">),</span>
+                <span class="s2">&quot;--&quot;</span><span class="p">,</span>
+                <span class="n">color</span><span class="o">=</span><span class="s2">&quot;darkorange&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="n">i</span> <span class="o">%</span> <span class="mi">5</span><span class="p">]</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">([])</span>
+            <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="n">i</span> <span class="o">%</span> <span class="mi">5</span><span class="p">]</span><span class="o">.</span><span class="n">set_yticks</span><span class="p">([])</span>
+            <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="n">i</span> <span class="o">%</span> <span class="mi">5</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">pixels</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="n">pix</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">i</span> <span class="o">&gt;=</span> <span class="mi">10</span> <span class="ow">and</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">15</span><span class="p">:</span>
+            <span class="n">axes</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="n">i</span> <span class="o">%</span> <span class="mi">5</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+                <span class="n">bin_centers</span><span class="p">,</span> <span class="n">counts</span><span class="p">,</span> <span class="s2">&quot;.&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;rebeccapurple&quot;</span>
+            <span class="p">)</span>
+            <span class="n">axes</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="n">i</span> <span class="o">%</span> <span class="mi">5</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+                <span class="n">bin_centers</span><span class="p">,</span>
+                <span class="n">utils</span><span class="o">.</span><span class="n">gaussian</span><span class="p">(</span><span class="n">bin_centers</span><span class="p">,</span> <span class="o">*</span><span class="n">params</span><span class="p">),</span>
+                <span class="s2">&quot;--&quot;</span><span class="p">,</span>
+                <span class="n">color</span><span class="o">=</span><span class="s2">&quot;darkorange&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">axes</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="n">i</span> <span class="o">%</span> <span class="mi">5</span><span class="p">]</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">([])</span>
+            <span class="n">axes</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="n">i</span> <span class="o">%</span> <span class="mi">5</span><span class="p">]</span><span class="o">.</span><span class="n">set_yticks</span><span class="p">([])</span>
+            <span class="n">axes</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="n">i</span> <span class="o">%</span> <span class="mi">5</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">pixels</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="n">pix</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">axes</span><span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="n">i</span> <span class="o">%</span> <span class="mi">5</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+                <span class="n">bin_centers</span><span class="p">,</span> <span class="n">counts</span><span class="p">,</span> <span class="s2">&quot;.&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;rebeccapurple&quot;</span>
+            <span class="p">)</span>
+            <span class="n">axes</span><span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="n">i</span> <span class="o">%</span> <span class="mi">5</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+                <span class="n">bin_centers</span><span class="p">,</span>
+                <span class="n">utils</span><span class="o">.</span><span class="n">gaussian</span><span class="p">(</span><span class="n">bin_centers</span><span class="p">,</span> <span class="o">*</span><span class="n">params</span><span class="p">),</span>
+                <span class="s2">&quot;--&quot;</span><span class="p">,</span>
+                <span class="n">color</span><span class="o">=</span><span class="s2">&quot;darkorange&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">axes</span><span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="n">i</span> <span class="o">%</span> <span class="mi">5</span><span class="p">]</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">([])</span>
+            <span class="n">axes</span><span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="n">i</span> <span class="o">%</span> <span class="mi">5</span><span class="p">]</span><span class="o">.</span><span class="n">set_yticks</span><span class="p">([])</span>
+            <span class="n">axes</span><span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="n">i</span> <span class="o">%</span> <span class="mi">5</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">pixels</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="n">pix</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\u0394</span><span class="s2">t (ps)&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">26</span><span class="p">)</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">,</span> <span class="s2">&quot;# of coincidences (-)&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">26</span><span class="p">,</span> <span class="n">rotation</span><span class="o">=</span><span class="mi">90</span><span class="p">)</span>
+
+    <span class="c1"># Make plots tight</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;results/ct_fit&quot;</span><span class="p">))</span>
+    <span class="k">except</span> <span class="ne">FileNotFoundError</span><span class="p">:</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;results/ct_fit&quot;</span><span class="p">))</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;results/ct_fit&quot;</span><span class="p">))</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;CT_fit_pixels_</span><span class="si">{</span><span class="n">pixels</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="n">pix</span><span class="si">}</span><span class="s2">_grid.png&quot;</span><span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;cross_talk_data&quot;</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="n">show_plots</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="n">fig</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="collect_dcr_by_file">
+<a class="viewcode-back" href="../../../daplis.functions.cross_talk.html#daplis.functions.cross_talk.collect_dcr_by_file">[docs]</a>
+<span class="k">def</span> <span class="nf">collect_dcr_by_file</span><span class="p">(</span>
+    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">daughterboard_number</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">motherboard_number</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">firmware_version</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">timestamps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Calculate dark count rate in counts per second per pixel.</span>
+
+<span class="sd">    Calculate dark count rate for the given daughterboard and</span>
+<span class="sd">    motherboard in units of counts per second per pixel for each file</span>
+<span class="sd">    in the given folder and save the resulting list as a .pkl file.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    path : str</span>
+<span class="sd">        Path to the folder with the &#39;.dat&#39; data files.</span>
+<span class="sd">    daughterboard_number : str</span>
+<span class="sd">        LinoSPAD2 daughterboard number.</span>
+<span class="sd">    motherboard_number : str</span>
+<span class="sd">        LinoSPAD2 motherboard (FPGA) number, including the &#39;#&#39;.</span>
+<span class="sd">    firmware_version : str</span>
+<span class="sd">        LinoSPAD2 firmware version.</span>
+<span class="sd">    timestamps : int, optional</span>
+<span class="sd">        Number of timestamps per acquisition cycle per TDC. The default</span>
+<span class="sd">        is 1000.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    TypeError</span>
+<span class="sd">        Raised if the firmware version given is not recognized.</span>
+<span class="sd">    TypeError</span>
+<span class="sd">        Raised if the daughterboard number given is not recognized.</span>
+<span class="sd">    TypeError</span>
+<span class="sd">        Raised if the motherboard number given is not recognized.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Parameter type check</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">firmware_version</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+            <span class="s2">&quot;&#39;firmware_version&#39; should be a string, &#39;2212b&#39; or &#39;2212s&#39;&quot;</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">daughterboard_number</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+            <span class="s2">&quot;&#39;daughterboard_number&#39; should be a string, &#39;NL11&#39; or &#39;A5&#39;&quot;</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">motherboard_number</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;&#39;motherboard_number&#39; should be a string&quot;</span><span class="p">)</span>
+
+    <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+
+    <span class="n">files</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s2">&quot;*.dat*&quot;</span><span class="p">)</span>
+    <span class="n">files</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">files</span><span class="p">)</span>
+
+    <span class="n">output_file_name</span> <span class="o">=</span> <span class="n">files</span><span class="p">[</span><span class="mi">0</span><span class="p">][:</span><span class="o">-</span><span class="mi">4</span><span class="p">]</span> <span class="o">+</span> <span class="s2">&quot;-&quot;</span> <span class="o">+</span> <span class="n">files</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][:</span><span class="o">-</span><span class="mi">4</span><span class="p">]</span>
+
+    <span class="n">valid_per_pixel</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">256</span><span class="p">)</span>
+
+    <span class="n">dcr</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">files</span><span class="p">)),</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Going through files&quot;</span><span class="p">):</span>
+        <span class="c1"># Define matrix of pixel coordinates, where rows are numbers of TDCs</span>
+        <span class="c1"># and columns are the pixels that connected to these TDCs</span>
+        <span class="k">if</span> <span class="n">firmware_version</span> <span class="o">==</span> <span class="s2">&quot;2212s&quot;</span><span class="p">:</span>
+            <span class="n">pix_coor</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">256</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">64</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
+        <span class="k">elif</span> <span class="n">firmware_version</span> <span class="o">==</span> <span class="s2">&quot;2212b&quot;</span><span class="p">:</span>
+            <span class="n">pix_coor</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">256</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">64</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Firmware version is not recognized.&quot;</span><span class="p">)</span>
+            <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">()</span>
+
+        <span class="c1"># Unpack the data; offset calibration is not necessary</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">f_up</span><span class="o">.</span><span class="n">unpack_binary_data</span><span class="p">(</span>
+            <span class="n">files</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+            <span class="n">daughterboard_number</span><span class="p">,</span>
+            <span class="n">motherboard_number</span><span class="p">,</span>
+            <span class="n">firmware_version</span><span class="p">,</span>
+            <span class="n">timestamps</span><span class="p">,</span>
+            <span class="n">include_offset</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Collect number of timestamps in each pixel - DCR</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">256</span><span class="p">):</span>
+            <span class="n">tdc</span><span class="p">,</span> <span class="n">pix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argwhere</span><span class="p">(</span><span class="n">pix_coor</span> <span class="o">==</span> <span class="n">i</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">tdc</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">pix</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">ind1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">tdc</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="n">ind</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">valid_per_pixel</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">tdc</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="n">ind</span><span class="p">[</span><span class="n">ind1</span><span class="p">]])</span>
+
+        <span class="n">acq_window_length</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">data</span><span class="p">[:]</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">*</span> <span class="mf">1e-12</span>
+        <span class="n">number_of_cycles</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="o">-</span><span class="mi">2</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
+
+        <span class="n">dcr</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">valid_per_pixel</span> <span class="o">/</span> <span class="n">acq_window_length</span> <span class="o">/</span> <span class="n">number_of_cycles</span><span class="p">)</span>
+
+    <span class="n">dcr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">dcr</span><span class="p">)</span>
+
+    <span class="c1"># Save the results into a .pkl file</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="s2">&quot;dcr_data&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">FileNotFoundError</span><span class="p">:</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="s2">&quot;dcr_data&quot;</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="s2">&quot;dcr_data&quot;</span><span class="p">)</span>
+
+    <span class="n">file_with_dcr</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">output_file_name</span><span class="si">}</span><span class="s2">_dcr_data.pkl&quot;</span>
+
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">file_with_dcr</span><span class="p">,</span> <span class="s2">&quot;wb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">pickle</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">dcr</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
+
+    <span class="c1"># Check, if the file was created</span>
+    <span class="n">absolute_address</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;dcr_data&quot;</span><span class="p">,</span> <span class="n">file_with_dcr</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">absolute_address</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&gt; &gt; &gt; DCR data are saved in </span><span class="si">{</span><span class="n">absolute_address</span><span class="si">}</span><span class="s2"> &lt; &lt; &lt;&quot;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;File wasn&#39;t generated. Check input parameters.&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Average and median DCR, including the hot pixels</span>
+    <span class="n">dcr_average</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">average</span><span class="p">(</span><span class="n">dcr</span><span class="p">)</span>
+    <span class="n">dcr_median</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">dcr</span><span class="p">)</span>
+
+    <span class="c1"># Average and median DCR, with the hot pixels masked</span>
+    <span class="n">mask</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">apply_mask</span><span class="p">(</span><span class="n">daughterboard_number</span><span class="p">,</span> <span class="n">motherboard_number</span><span class="p">)</span>
+    <span class="n">dcr</span><span class="p">[:,</span> <span class="n">mask</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">dcr_average_masked</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">average</span><span class="p">(</span><span class="n">dcr</span><span class="p">)</span>
+    <span class="n">dcr_median_masked</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">dcr</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span>
+        <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="s2">&quot;DCR including hot pixels:&quot;</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s2">&quot;DCR Average: </span><span class="si">{</span><span class="n">dcr_average</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2"> cps/pixel&quot;</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s2">&quot;DCR Median: </span><span class="si">{</span><span class="n">dcr_median</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2"> cps/pixel&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;                                                 &quot;</span><span class="p">,</span>
+                <span class="s2">&quot;DCR without hot pixels:&quot;</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s2">&quot;DCR Average: </span><span class="si">{</span><span class="n">dcr_average_masked</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2"> cps/pixel&quot;</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s2">&quot;DCR Median: </span><span class="si">{</span><span class="n">dcr_median_masked</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2"> cps/pixel&quot;</span><span class="p">,</span>
+            <span class="p">]</span>
+        <span class="p">)</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="plot_dcr_histogram_and_stability">
+<a class="viewcode-back" href="../../../daplis.functions.cross_talk.html#daplis.functions.cross_talk.plot_dcr_histogram_and_stability">[docs]</a>
+<span class="k">def</span> <span class="nf">plot_dcr_histogram_and_stability</span><span class="p">(</span>
+    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">hist_number_of_bins</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">200</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Plot median DCR vs file and histogram of DCR with integral.</span>
+
+<span class="sd">    Plot median DCR vs file for checking the setup stability. Also, plot</span>
+<span class="sd">    a histogram of DCR together with intergral over pixels in units of</span>
+<span class="sd">    %.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    path : str</span>
+<span class="sd">        Path to the folder with &#39;.dat&#39; data files.</span>
+<span class="sd">    hist_number_of_bins : int, optional</span>
+<span class="sd">        Number of bins for the DCR histogram. The default is 200.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    FileNotFoundError</span>
+<span class="sd">        Raised if the folder with the DCR data was not found.</span>
+<span class="sd">    FileNotFoundError</span>
+<span class="sd">        Raised if the .pkl file with the DCR data was not found.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+
+    <span class="c1"># Collect all files in the given folder</span>
+    <span class="n">files</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s2">&quot;*.dat&quot;</span><span class="p">)</span>
+    <span class="n">files</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">files</span><span class="p">)</span>
+
+    <span class="c1"># Find the file with the DCR data for the found files</span>
+    <span class="n">dcr_file_name</span> <span class="o">=</span> <span class="n">files</span><span class="p">[</span><span class="mi">0</span><span class="p">][:</span><span class="o">-</span><span class="mi">4</span><span class="p">]</span> <span class="o">+</span> <span class="s2">&quot;-&quot;</span> <span class="o">+</span> <span class="n">files</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][:</span><span class="o">-</span><span class="mi">4</span><span class="p">]</span>
+    <span class="n">file_with_dcr</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">dcr_file_name</span><span class="si">}</span><span class="s2">_dcr_data.pkl&quot;</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="s2">&quot;dcr_data&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">FileNotFoundError</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="s2">&quot;The folder with DCR data was not found.&quot;</span><span class="p">)</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">file_with_dcr</span><span class="p">,</span> <span class="s2">&quot;rb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">FileNotFoundError</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">file_with_dcr</span><span class="si">}</span><span class="s2"> was not found&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Median DCR over the whole sensor</span>
+    <span class="n">dcr_median</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+    <span class="c1"># Plot the DCR stability graph: median DCR vs file</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;font.size&quot;</span><span class="p">:</span> <span class="mi">27</span><span class="p">})</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+        <span class="p">[</span><span class="n">x</span> <span class="o">+</span> <span class="mi">1</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">))],</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
+        <span class="n">color</span><span class="o">=</span><span class="s2">&quot;darkslateblue&quot;</span><span class="p">,</span>
+        <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Median DCR: </span><span class="si">{</span><span class="n">dcr_median</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2"> cps/pixel&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;DCR stability&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;File (-)&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;Median DCR (cps)&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s2">&quot;best&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Save the plot to &quot;results/dcr&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="s2">&quot;../results/dcr&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">FileNotFoundError</span><span class="p">:</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="s2">&quot;../results/dcr&quot;</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="s2">&quot;../results/dcr&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s2">&quot;DCR_stability_graph.png&quot;</span><span class="p">)</span>
+
+    <span class="c1"># DCR histogram with integral</span>
+    <span class="c1"># Compute the histogram</span>
+    <span class="n">bins</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logspace</span><span class="p">(</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="mf">0.1</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">])),</span> <span class="n">hist_number_of_bins</span>
+    <span class="p">)</span>
+    <span class="n">hist</span><span class="p">,</span> <span class="n">bin_edges</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">histogram</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">average</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span> <span class="n">bins</span><span class="o">=</span><span class="n">bins</span><span class="p">)</span>
+    <span class="n">bin_centers</span> <span class="o">=</span> <span class="p">(</span><span class="n">bin_edges</span> <span class="o">-</span> <span class="p">(</span><span class="n">bin_edges</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">bin_edges</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)[</span><span class="mi">1</span><span class="p">:]</span>
+
+    <span class="c1"># Plot the histogram</span>
+    <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span>
+        <span class="n">bin_centers</span><span class="p">,</span>
+        <span class="n">hist</span><span class="p">,</span>
+        <span class="n">width</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">bin_edges</span><span class="p">),</span>
+        <span class="n">color</span><span class="o">=</span><span class="s2">&quot;rebeccapurple&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Calculate and plot the integral</span>
+    <span class="n">cumul</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">hist</span><span class="p">)</span>
+    <span class="n">ax1</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">twinx</span><span class="p">()</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">bin_centers</span><span class="p">,</span> <span class="n">cumul</span> <span class="o">/</span> <span class="mi">256</span> <span class="o">*</span> <span class="mi">100</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;darkorange&quot;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_xscale</span><span class="p">(</span><span class="s2">&quot;log&quot;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;DCR (cps/pixel)&quot;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;Count (-)&quot;</span><span class="p">)</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;Integral (%)&quot;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Median DCR: </span><span class="si">{</span><span class="n">dcr_median</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2"> cps/pixel&quot;</span><span class="p">)</span>
+    <span class="c1"># plt.show()</span>
+
+    <span class="c1"># Save the plot to &quot;results/dcr&quot;</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s2">&quot;DCR_histogram_w_integral.png&quot;</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span> <span class="nf">_calculate_and_plot_cross_talk</span><span class="p">(</span>
+    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">pixels</span><span class="p">:</span> <span class="n">List</span><span class="p">,</span>
+    <span class="n">multiplier</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">delta_window</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">senpop</span><span class="p">,</span>
+    <span class="n">pix_on_left</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">feather_file_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="n">show_plots</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Plot cross-talk peaks and calculate peak population.</span>
+
+<span class="sd">    Plots a histogram of timestamp differences collected from the</span>
+<span class="sd">    cross-talk data, fits using Gaussian to extract sigma and peak</span>
+<span class="sd">    position. These two numbers are then used to calculate the peak</span>
+<span class="sd">    population as numbers of data points in a +/- 2*sigma window</span>
+<span class="sd">    around the peak position minus background in the same window.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    path : str</span>
+<span class="sd">        Path to the folder with the &#39;.dat&#39; data files.</span>
+<span class="sd">    pixels : List[int]</span>
+<span class="sd">        List of lists with pixels numbers. Each list starts with the</span>
+<span class="sd">        aggressor pixel plus 20 pixels either on the left or right.</span>
+<span class="sd">    multiplier : int</span>
+<span class="sd">        Multiplier of the LinoSPAD2 average timing bin of 17.857 ps for</span>
+<span class="sd">        histograms of the timestamp differences.</span>
+<span class="sd">    delta_window : float</span>
+<span class="sd">        Length of the window for the histogram range.</span>
+<span class="sd">    senpop : list</span>
+<span class="sd">        List with numbers of timestamps per pixel.</span>
+<span class="sd">    pix_on_left : bool, optional</span>
+<span class="sd">        Indicator of pixels to the left of the aggressor. The default is False.</span>
+<span class="sd">    feather_file_name : str, optional</span>
+<span class="sd">        Naming pattern of the feather files that can be used when</span>
+<span class="sd">        actual data files are not available. The pattern should</span>
+<span class="sd">        include the number of the first and the last data files, e.g.,</span>
+<span class="sd">        &quot;0000010000-0000012000&quot;. The default is &quot;&quot;.</span>
+<span class="sd">    show_plots : bool, optional</span>
+<span class="sd">        Switch for showing the plots at the end. The default is False.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    dict, dict</span>
+<span class="sd">        Two dictionaries with distances in pixels from the aggressor</span>
+<span class="sd">        pixel, where the first dictionary contains cross-talk</span>
+<span class="sd">        probabilities and the second - the corresponding errors.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">ct</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">ct_err</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">for</span> <span class="n">pix</span> <span class="ow">in</span> <span class="n">pixels</span><span class="p">:</span>
+        <span class="n">CT</span><span class="p">,</span> <span class="n">CT_err</span> <span class="o">=</span> <span class="n">_plot_cross_talk_peaks</span><span class="p">(</span>
+            <span class="n">path</span><span class="p">,</span>
+            <span class="n">pixels</span><span class="o">=</span><span class="n">pix</span><span class="p">,</span>
+            <span class="n">multiplier</span><span class="o">=</span><span class="n">multiplier</span><span class="p">,</span>
+            <span class="n">window</span><span class="o">=</span><span class="n">delta_window</span><span class="p">,</span>
+            <span class="n">senpop</span><span class="o">=</span><span class="n">senpop</span><span class="p">,</span>
+            <span class="n">pix_on_left</span><span class="o">=</span><span class="n">pix_on_left</span><span class="p">,</span>
+            <span class="n">feather_file_name</span><span class="o">=</span><span class="n">feather_file_name</span><span class="p">,</span>
+            <span class="n">show_plots</span><span class="o">=</span><span class="n">show_plots</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">_plot_cross_talk_grid</span><span class="p">(</span>
+            <span class="n">path</span><span class="p">,</span>
+            <span class="n">pixels</span><span class="o">=</span><span class="n">pix</span><span class="p">,</span>
+            <span class="n">multiplier</span><span class="o">=</span><span class="n">multiplier</span><span class="p">,</span>
+            <span class="n">window</span><span class="o">=</span><span class="n">delta_window</span><span class="p">,</span>
+            <span class="n">pix_on_left</span><span class="o">=</span><span class="n">pix_on_left</span><span class="p">,</span>
+            <span class="n">feather_file_name</span><span class="o">=</span><span class="n">feather_file_name</span><span class="p">,</span>
+            <span class="n">show_plots</span><span class="o">=</span><span class="n">show_plots</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">ct</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">CT</span><span class="p">)</span>
+        <span class="n">ct_err</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">CT_err</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">ct</span><span class="p">,</span> <span class="n">ct_err</span>
+
+
+<span class="k">def</span> <span class="nf">_plot_cross_talk_vs_distance</span><span class="p">(</span>
+    <span class="n">path</span><span class="p">,</span> <span class="n">ct</span><span class="p">,</span> <span class="n">ct_err</span><span class="p">,</span> <span class="n">pix_on_left</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">show_plots</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Plot cross-talk vs distance from the aggressor.</span>
+
+<span class="sd">    Plot cross-talk probability as a function of distance from the</span>
+<span class="sd">    aggressor pixel.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    path : str</span>
+<span class="sd">        Path to the folder with the &#39;.dat&#39; data files.</span>
+<span class="sd">    ct : dict</span>
+<span class="sd">        Dictionary of cross-talk probabilities with distance from the</span>
+<span class="sd">        aggressor as keys.</span>
+<span class="sd">    ct_err : dict</span>
+<span class="sd">        Dictionary of cross-talk error values with distance from the</span>
+<span class="sd">        aggressor as keys.</span>
+<span class="sd">    pix_on_left : bool, optional</span>
+<span class="sd">        Indicator of pixels to the left of the aggressor. The default is False.</span>
+<span class="sd">    show_plots : bool, optional</span>
+<span class="sd">        Switch for showing the plots at the end. The default is False.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;ct_vs_distance&quot;</span><span class="p">))</span>
+    <span class="k">except</span> <span class="ne">FileNotFoundError</span><span class="p">:</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;ct_vs_distance&quot;</span><span class="p">))</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;ct_vs_distance&quot;</span><span class="p">))</span>
+
+    <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="p">(</span><span class="n">CT</span><span class="p">,</span> <span class="n">CT_err</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">ct</span><span class="p">,</span> <span class="n">ct_err</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="n">CT</span> <span class="o">==</span> <span class="p">{}</span> <span class="ow">or</span> <span class="n">CT_err</span> <span class="o">==</span> <span class="p">{}:</span>
+            <span class="k">continue</span>
+
+        <span class="n">differences</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">keys</span> <span class="o">=</span> <span class="n">CT</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">:</span>
+            <span class="c1"># Convert the key to a tuple</span>
+            <span class="n">key_tuple</span> <span class="o">=</span> <span class="nb">eval</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="c1"># Extract the difference and append it to the list</span>
+            <span class="n">differences</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">key_tuple</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">key_tuple</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+        <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;font.size&quot;</span><span class="p">:</span> <span class="mi">27</span><span class="p">})</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">errorbar</span><span class="p">(</span>
+            <span class="n">differences</span><span class="p">,</span>
+            <span class="nb">list</span><span class="p">(</span><span class="n">CT</span><span class="o">.</span><span class="n">values</span><span class="p">()),</span>
+            <span class="nb">list</span><span class="p">(</span><span class="n">CT_err</span><span class="o">.</span><span class="n">values</span><span class="p">()),</span>
+            <span class="n">fmt</span><span class="o">=</span><span class="s2">&quot;.&quot;</span><span class="p">,</span>
+            <span class="n">color</span><span class="o">=</span><span class="s2">&quot;indianred&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">aggressor_pix</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">CT</span><span class="o">.</span><span class="n">keys</span><span class="p">())[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;(&quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Cross-talk probability for aggressor pixel </span><span class="si">{</span><span class="n">aggressor_pix</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;Distance in pixels (-)&quot;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;Cross-talk probability (%)&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">pix_on_left</span><span class="p">:</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Cross-talk_aggressor_pixel_</span><span class="si">{</span><span class="n">aggressor_pix</span><span class="si">}</span><span class="s2">_onleft.png&quot;</span>
+            <span class="p">)</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Cross-talk_aggressor_pixel_</span><span class="si">{</span><span class="n">aggressor_pix</span><span class="si">}</span><span class="s2">_onleft.pkl&quot;</span><span class="p">,</span> <span class="s2">&quot;wb&quot;</span>
+            <span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="n">pickle</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">fig</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Cross-talk_aggressor_pixel_</span><span class="si">{</span><span class="n">aggressor_pix</span><span class="si">}</span><span class="s2">_onright.png&quot;</span>
+            <span class="p">)</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Cross-talk_aggressor_pixel_</span><span class="si">{</span><span class="n">aggressor_pix</span><span class="si">}</span><span class="s2">_onright.pkl&quot;</span><span class="p">,</span> <span class="s2">&quot;wb&quot;</span>
+            <span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="n">pickle</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">fig</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">show_plots</span><span class="p">:</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="n">fig</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_plot_average_cross_talk_vs_distance</span><span class="p">(</span>
+    <span class="n">path</span><span class="p">,</span> <span class="n">ct</span><span class="p">,</span> <span class="n">ct_err</span><span class="p">,</span> <span class="n">pix_on_left</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Plot average cross-talk vs distance from the aggressor pixel.</span>
+
+<span class="sd">    Plot average cross-talk probability vs distance from the aggressor</span>
+<span class="sd">    averaging accross the whole sensor and all hot pixels byt dividing</span>
+<span class="sd">    between either to the left or to the right of the aggressor the</span>
+<span class="sd">    cross-talk is calculated.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    path : str</span>
+<span class="sd">        Path to the folder with the &#39;.dat&#39; data files.</span>
+<span class="sd">    ct : dict</span>
+<span class="sd">        Dictionary of cross-talk probabilities for each distance from 1 to 20.</span>
+<span class="sd">    ct_err : dict</span>
+<span class="sd">        Dictionary of cross-talk error values for each distance from 1 to 20.</span>
+<span class="sd">    pix_on_left : bool, optional</span>
+<span class="sd">        Indicator of pixels to the left of the aggressor. The default is False.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    dict</span>
+<span class="sd">        Dictionary of average cross-talk numbers and error with distance</span>
+<span class="sd">        from the aggressor as keys.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;ct_vs_distance&quot;</span><span class="p">))</span>
+    <span class="k">except</span> <span class="ne">FileNotFoundError</span><span class="p">:</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;ct_vs_distance&quot;</span><span class="p">))</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;ct_vs_distance&quot;</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="n">pix_on_left</span><span class="p">:</span>
+        <span class="n">final_result</span> <span class="o">=</span> <span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="p">[]</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="o">-</span><span class="mi">20</span><span class="p">,</span> <span class="mi">0</span><span class="p">)}</span>
+        <span class="n">final_result_averages</span> <span class="o">=</span> <span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="p">[]</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="o">-</span><span class="mi">20</span><span class="p">,</span> <span class="mi">0</span><span class="p">)}</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">final_result</span> <span class="o">=</span> <span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="p">[]</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">21</span><span class="p">)}</span>
+        <span class="n">final_result_averages</span> <span class="o">=</span> <span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="p">[]</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">21</span><span class="p">)}</span>
+
+    <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="p">(</span><span class="n">ct_pick</span><span class="p">,</span> <span class="n">ct_err_pick</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">ct</span><span class="p">,</span> <span class="n">ct_err</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="n">ct_pick</span> <span class="o">==</span> <span class="p">{}</span> <span class="ow">or</span> <span class="n">ct_err_pick</span> <span class="o">==</span> <span class="p">{}:</span>
+            <span class="k">continue</span>
+
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">ct_pick</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="n">key_tuple</span> <span class="o">=</span> <span class="nb">eval</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+
+            <span class="n">key_difference</span> <span class="o">=</span> <span class="n">key_tuple</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">key_tuple</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">final_result</span><span class="p">[</span><span class="n">key_difference</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="p">(</span><span class="n">ct_pick</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="n">ct_err_pick</span><span class="p">[</span><span class="n">key</span><span class="p">])</span>
+            <span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">final_result</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">average</span><span class="p">([</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">final_result</span><span class="p">[</span><span class="n">key</span><span class="p">]])</span>
+        <span class="n">error</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">([</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">**</span> <span class="mi">2</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">final_result</span><span class="p">[</span><span class="n">key</span><span class="p">]]))</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span>
+            <span class="n">final_result</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+        <span class="p">)</span>
+        <span class="n">final_result_averages</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">value</span><span class="p">,</span> <span class="n">error</span><span class="p">))</span>
+
+    <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;font.size&quot;</span><span class="p">:</span> <span class="mi">27</span><span class="p">})</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Average cross-talk probability&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;Distance in pixels (-)&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;Cross-talk probability (%)&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">errorbar</span><span class="p">(</span>
+        <span class="n">final_result_averages</span><span class="o">.</span><span class="n">keys</span><span class="p">(),</span>
+        <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">final_result_averages</span><span class="o">.</span><span class="n">values</span><span class="p">()],</span>
+        <span class="n">yerr</span><span class="o">=</span><span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">final_result_averages</span><span class="o">.</span><span class="n">values</span><span class="p">()],</span>
+        <span class="n">fmt</span><span class="o">=</span><span class="s2">&quot;.&quot;</span><span class="p">,</span>
+        <span class="n">color</span><span class="o">=</span><span class="s2">&quot;darkred&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">pix_on_left</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s2">&quot;Average_cross-talk_onleft.png&quot;</span><span class="p">)</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;Average_cross-talk_onleft.pkl&quot;</span><span class="p">,</span> <span class="s2">&quot;wb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">pickle</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">fig</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s2">&quot;Average_cross-talk_onright.png&quot;</span><span class="p">)</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;Average_cross-talk_onright.pkl&quot;</span><span class="p">,</span> <span class="s2">&quot;wb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">pickle</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">fig</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">final_result_averages</span>
+
+
+<div class="viewcode-block" id="zero_to_cross_talk_collect">
+<a class="viewcode-back" href="../../../daplis.functions.cross_talk.html#daplis.functions.cross_talk.zero_to_cross_talk_collect">[docs]</a>
+<span class="k">def</span> <span class="nf">zero_to_cross_talk_collect</span><span class="p">(</span>
+    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">pixels</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+    <span class="n">rewrite</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+    <span class="n">daughterboard_number</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">motherboard_number</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">firmware_version</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">timestamps</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">include_offset</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">delta_window</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">50e3</span><span class="p">,</span>
+    <span class="n">apply_calibration</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">absolute_timestamps</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">correct_pix_address</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Collect timestamp differences from cross-talk data.</span>
+
+<span class="sd">    For the given list of hot pixels, collect all timestamp differences</span>
+<span class="sd">    for pairs of pixels as aggressor-victim, where the victim pixel is</span>
+<span class="sd">    taken from each side of the aggressor (where applicable) and up to</span>
+<span class="sd">    the distance of 20 pixels (e.g., 100,120).</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    path : str</span>
+<span class="sd">        Path to the folder with the &#39;.dat&#39; data files.</span>
+<span class="sd">    pixels : list</span>
+<span class="sd">        List of pixels to use as aggressors. These can be hot pixels</span>
+<span class="sd">        or pixels where the signal is focused.</span>
+<span class="sd">    rewrite : bool</span>
+<span class="sd">        Switch for rewriting the feather file with timestamp differences.</span>
+<span class="sd">        Used for conscious start of an hours-long data processing and</span>
+<span class="sd">        avoiding rewriting/deleting already existing files.</span>
+<span class="sd">    daughterboard_number : str</span>
+<span class="sd">        LinoSPAD2 daughterboard number.</span>
+<span class="sd">    motherboard_number : str</span>
+<span class="sd">        LinoSPAD2 motherboard (FPGA) number, including the &#39;#&#39;.</span>
+<span class="sd">    firmware_version : str</span>
+<span class="sd">        LinoSPAD2 firmware version.</span>
+<span class="sd">    timestamps : int</span>
+<span class="sd">        Number of timestamps per TDC per cycle used during data</span>
+<span class="sd">        collection.</span>
+<span class="sd">    include_offset : bool</span>
+<span class="sd">        Switch for including the offset calibration. The default is</span>
+<span class="sd">        False.</span>
+<span class="sd">    delta_window : float, optional</span>
+<span class="sd">        Window size for collecting timestamp differences. The default</span>
+<span class="sd">        is 50e3.</span>
+<span class="sd">    apply_calibration : bool, optional</span>
+<span class="sd">        Switch for applying callibration. The default is True.</span>
+<span class="sd">    absolute_timestamps : bool, optional</span>
+<span class="sd">        Indicator of data collected with absolute timestamps. The</span>
+<span class="sd">        default is False.</span>
+<span class="sd">    correct_pix_address : bool, optional</span>
+<span class="sd">        Correct pixel address for the FPGA board on side 23. Here</span>
+<span class="sd">        used to reverse the correction. The default is False.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Define matrix of pixel coordinates, where rows are numbers of TDCs</span>
+    <span class="c1"># and columns are the pixels that connected to these TDCs</span>
+    <span class="k">if</span> <span class="n">firmware_version</span> <span class="o">==</span> <span class="s2">&quot;2212s&quot;</span><span class="p">:</span>
+        <span class="k">pass</span>
+    <span class="k">elif</span> <span class="n">firmware_version</span> <span class="o">==</span> <span class="s2">&quot;2212b&quot;</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span>
+            <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">For firmware version &#39;2212b&#39; cross-talk numbers &quot;</span>
+            <span class="s2">&quot;would be incorrect, try data collected with &#39;2212s&#39;&quot;</span>
+        <span class="p">)</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span>
+            <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Firmware version is not recognized. For cross-talk &quot;</span>
+            <span class="s2">&quot;calculations, firmware version &#39;2212s&#39; should be used.&quot;</span>
+        <span class="p">)</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">()</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&gt; &gt; &gt; Collecting cross-talk data &lt; &lt; &lt;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Reverse correction if the motherboard connected to side &quot;23&quot; of the</span>
+    <span class="c1"># daughterboard</span>
+    <span class="k">if</span> <span class="n">correct_pix_address</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">pixel</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">pixels</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">pixel</span> <span class="o">&gt;</span> <span class="mi">127</span><span class="p">:</span>
+                <span class="n">pixels</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mi">255</span> <span class="o">-</span> <span class="n">pixel</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">pixels</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">pixel</span> <span class="o">+</span> <span class="mi">128</span>
+
+    <span class="n">pixels_plus_20</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">[</span><span class="n">x</span> <span class="o">+</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">21</span><span class="p">)]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">pixels</span> <span class="k">if</span> <span class="n">x</span> <span class="o">&lt;=</span> <span class="mi">235</span>
+    <span class="p">]</span>
+    <span class="n">pixels_minus_20</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">[</span><span class="n">x</span> <span class="o">-</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">21</span><span class="p">)]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">pixels</span> <span class="k">if</span> <span class="n">x</span> <span class="o">&gt;=</span> <span class="mi">20</span>
+    <span class="p">]</span>
+
+    <span class="c1"># Collecting sensor population</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="n">files</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s2">&quot;*.dat&quot;</span><span class="p">)</span>
+    <span class="n">sensor_plot</span><span class="o">.</span><span class="n">collect_data_and_apply_mask</span><span class="p">(</span>
+        <span class="n">files</span><span class="p">,</span>
+        <span class="n">daughterboard_number</span><span class="p">,</span>
+        <span class="n">motherboard_number</span><span class="p">,</span>
+        <span class="n">firmware_version</span><span class="p">,</span>
+        <span class="n">timestamps</span><span class="p">,</span>
+        <span class="n">app_mask</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">save_to_file</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">absolute_timestamps</span><span class="o">=</span><span class="n">absolute_timestamps</span><span class="p">,</span>
+        <span class="n">correct_pix_address</span><span class="o">=</span><span class="n">correct_pix_address</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">pixels</span> <span class="ow">in</span> <span class="n">pixels_plus_20</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span>
+            <span class="s2">&quot;Calculating timestamp differences between aggressor pixel &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">pixels</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2"> and pixels to the right&quot;</span>
+        <span class="p">)</span>
+        <span class="n">_collect_cross_talk</span><span class="p">(</span>
+            <span class="n">path</span><span class="p">,</span>
+            <span class="n">pixels</span><span class="p">,</span>
+            <span class="n">rewrite</span><span class="p">,</span>
+            <span class="n">daughterboard_number</span><span class="p">,</span>
+            <span class="n">motherboard_number</span><span class="p">,</span>
+            <span class="n">firmware_version</span><span class="p">,</span>
+            <span class="n">timestamps</span><span class="p">,</span>
+            <span class="n">delta_window</span><span class="p">,</span>
+            <span class="n">include_offset</span><span class="p">,</span>
+            <span class="n">apply_calibration</span><span class="p">,</span>
+            <span class="n">absolute_timestamps</span><span class="p">,</span>
+            <span class="n">correct_pix_address</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">pixels</span> <span class="ow">in</span> <span class="n">pixels_minus_20</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span>
+            <span class="s2">&quot;Calculating timestamp differences between aggressor pixel &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">pixels</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2"> and pixels to the left&quot;</span>
+        <span class="p">)</span>
+        <span class="n">_collect_cross_talk</span><span class="p">(</span>
+            <span class="n">path</span><span class="p">,</span>
+            <span class="n">pixels</span><span class="p">,</span>
+            <span class="n">rewrite</span><span class="p">,</span>
+            <span class="n">daughterboard_number</span><span class="p">,</span>
+            <span class="n">motherboard_number</span><span class="p">,</span>
+            <span class="n">firmware_version</span><span class="p">,</span>
+            <span class="n">timestamps</span><span class="p">,</span>
+            <span class="n">delta_window</span><span class="p">,</span>
+            <span class="n">include_offset</span><span class="p">,</span>
+            <span class="n">apply_calibration</span><span class="p">,</span>
+            <span class="n">absolute_timestamps</span><span class="p">,</span>
+            <span class="n">correct_pix_address</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="zero_to_cross_talk_plot">
+<a class="viewcode-back" href="../../../daplis.functions.cross_talk.html#daplis.functions.cross_talk.zero_to_cross_talk_plot">[docs]</a>
+<span class="k">def</span> <span class="nf">zero_to_cross_talk_plot</span><span class="p">(</span>
+    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">pixels</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+    <span class="n">delta_window</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">50e3</span><span class="p">,</span>
+    <span class="n">multiplier</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+    <span class="n">show_plots</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">feather_file_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Plot cross-talk peaks and as average vs distance from aggressor.</span>
+
+<span class="sd">    For the given pixels, look for the timestamp differences in</span>
+<span class="sd">    feather files, plot histograms and fits with Gaussian of cross-talk</span>
+<span class="sd">    peaks for each pair of pixels (aggressor-victim), collects</span>
+<span class="sd">    cross-talk peak population in a 2*sigma window, plots as average</span>
+<span class="sd">    vs distance from the aggressor for each aggressor pixel and to each</span>
+<span class="sd">    side (to the left and to the right). Finally, averages all numbers</span>
+<span class="sd">    and produces a single plot of average cross-talk vs distance from</span>
+<span class="sd">    the aggressor across all hot pixels.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    path : str</span>
+<span class="sd">        Path to the folder with the &#39;.dat&#39; data files.</span>
+<span class="sd">    pixels : List[int]</span>
+<span class="sd">        List of pixels to use as aggressors. These can be hot pixels</span>
+<span class="sd">        or pixels where the signal is focused.</span>
+<span class="sd">    delta_window : float, optional</span>
+<span class="sd">        Window size for histograms of timestamp differences. The default</span>
+<span class="sd">        is 50e3.</span>
+<span class="sd">    multiplier : int, optional</span>
+<span class="sd">        Multiplier of average LinoSPAD2 time bin, which is 17.857 ps,</span>
+<span class="sd">        for histograms. The default is 10.</span>
+<span class="sd">    show_plots : bool, optional</span>
+<span class="sd">        Switch for showing the plots at the end. The default is False.</span>
+<span class="sd">    feather_file_name : str, optional</span>
+<span class="sd">        Naming pattern of the feather files that can be used when</span>
+<span class="sd">        actual data files are not available. The pattern should</span>
+<span class="sd">        include the number of the first and the last data files, e.g.,</span>
+<span class="sd">        &quot;0000010000-0000012000&quot;. The default is &quot;&quot;.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    FileNotFoundError</span>
+<span class="sd">        Raised when no txt file with the sensor population data is</span>
+<span class="sd">        found.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&gt; &gt; &gt; Plotting cross-talk peaks and averages &lt; &lt; &lt;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;ct_vs_distance&quot;</span><span class="p">))</span>
+    <span class="k">except</span> <span class="ne">FileNotFoundError</span><span class="p">:</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;ct_vs_distance&quot;</span><span class="p">))</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;ct_vs_distance&quot;</span><span class="p">))</span>
+
+    <span class="n">pixels_plus_20</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">[</span><span class="n">x</span> <span class="o">+</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">21</span><span class="p">)]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">pixels</span> <span class="k">if</span> <span class="n">x</span> <span class="o">&lt;=</span> <span class="mi">235</span>
+    <span class="p">]</span>
+    <span class="n">pixels_minus_20</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">[</span><span class="n">x</span> <span class="o">-</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">21</span><span class="p">)]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">pixels</span> <span class="k">if</span> <span class="n">x</span> <span class="o">&gt;=</span> <span class="mi">20</span>
+    <span class="p">]</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;senpop_data&quot;</span><span class="p">))</span>
+        <span class="n">senpop_data_txt</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s2">&quot;*.txt&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">senpop</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">genfromtxt</span><span class="p">(</span><span class="n">senpop_data_txt</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">_</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span>
+            <span class="s2">&quot;Txt file with sensor population data is not found. Collect &quot;</span>
+            <span class="s2">&quot;sensor population first.&quot;</span>
+        <span class="p">)</span>
+
+    <span class="n">ct_right</span><span class="p">,</span> <span class="n">ct_err_right</span> <span class="o">=</span> <span class="n">_calculate_and_plot_cross_talk</span><span class="p">(</span>
+        <span class="n">path</span><span class="p">,</span>
+        <span class="n">pixels_plus_20</span><span class="p">,</span>
+        <span class="n">multiplier</span><span class="p">,</span>
+        <span class="n">delta_window</span><span class="p">,</span>
+        <span class="n">senpop</span><span class="p">,</span>
+        <span class="n">pix_on_left</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">feather_file_name</span><span class="o">=</span><span class="n">feather_file_name</span><span class="p">,</span>
+        <span class="n">show_plots</span><span class="o">=</span><span class="n">show_plots</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">ct_left</span><span class="p">,</span> <span class="n">ct_err_left</span> <span class="o">=</span> <span class="n">_calculate_and_plot_cross_talk</span><span class="p">(</span>
+        <span class="n">path</span><span class="p">,</span>
+        <span class="n">pixels_minus_20</span><span class="p">,</span>
+        <span class="n">multiplier</span><span class="p">,</span>
+        <span class="n">delta_window</span><span class="p">,</span>
+        <span class="n">senpop</span><span class="p">,</span>
+        <span class="n">pix_on_left</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">feather_file_name</span><span class="o">=</span><span class="n">feather_file_name</span><span class="p">,</span>
+        <span class="n">show_plots</span><span class="o">=</span><span class="n">show_plots</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">_plot_cross_talk_vs_distance</span><span class="p">(</span>
+        <span class="n">path</span><span class="p">,</span>
+        <span class="n">ct_right</span><span class="p">,</span>
+        <span class="n">ct_err_right</span><span class="p">,</span>
+        <span class="n">pix_on_left</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">show_plots</span><span class="o">=</span><span class="n">show_plots</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">_plot_cross_talk_vs_distance</span><span class="p">(</span>
+        <span class="n">path</span><span class="p">,</span>
+        <span class="n">ct_left</span><span class="p">,</span>
+        <span class="n">ct_err_left</span><span class="p">,</span>
+        <span class="n">pix_on_left</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">show_plots</span><span class="o">=</span><span class="n">show_plots</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">averages_right</span> <span class="o">=</span> <span class="n">_plot_average_cross_talk_vs_distance</span><span class="p">(</span>
+        <span class="n">path</span><span class="p">,</span>
+        <span class="n">ct_right</span><span class="p">,</span>
+        <span class="n">ct_err_right</span><span class="p">,</span>
+        <span class="n">pix_on_left</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">averages_left</span> <span class="o">=</span> <span class="n">_plot_average_cross_talk_vs_distance</span><span class="p">(</span>
+        <span class="n">path</span><span class="p">,</span>
+        <span class="n">ct_left</span><span class="p">,</span>
+        <span class="n">ct_err_left</span><span class="p">,</span>
+        <span class="n">pix_on_left</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">on_both_average</span> <span class="o">=</span> <span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="p">[]</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">21</span><span class="p">)}</span>
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">averages_left</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="n">ct_value_average</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">averages_left</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">averages_right</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">key</span><span class="p">)][</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+        <span class="n">ct_error_average</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span>
+                <span class="n">averages_left</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">**</span> <span class="mi">2</span>
+                <span class="o">+</span> <span class="n">averages_right</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">key</span><span class="p">)][</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">**</span> <span class="mi">2</span>
+            <span class="p">)</span>
+            <span class="o">/</span> <span class="mi">2</span>
+        <span class="p">)</span>
+        <span class="n">on_both_average</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">key</span><span class="p">)]</span> <span class="o">=</span> <span class="p">(</span><span class="n">ct_value_average</span><span class="p">,</span> <span class="n">ct_error_average</span><span class="p">)</span>
+
+    <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;font.size&quot;</span><span class="p">:</span> <span class="mi">27</span><span class="p">})</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Average cross-talk probability&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;Distance in pixels (-)&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;Cross-talk probability (%)&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">yscale</span><span class="p">(</span><span class="s2">&quot;log&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">errorbar</span><span class="p">(</span>
+        <span class="n">on_both_average</span><span class="o">.</span><span class="n">keys</span><span class="p">(),</span>
+        <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">on_both_average</span><span class="o">.</span><span class="n">values</span><span class="p">()],</span>
+        <span class="n">yerr</span><span class="o">=</span><span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">on_both_average</span><span class="o">.</span><span class="n">values</span><span class="p">()],</span>
+        <span class="n">fmt</span><span class="o">=</span><span class="s2">&quot;.&quot;</span><span class="p">,</span>
+        <span class="n">color</span><span class="o">=</span><span class="s2">&quot;darkred&quot;</span><span class="p">,</span>
+        <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Immediate neighbor: </span><span class="si">{</span><span class="n">on_both_average</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">%&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;ct_vs_distance&quot;</span><span class="p">))</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s2">&quot;best&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s2">&quot;Average_cross-talk.png&quot;</span><span class="p">)</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;Average_cross-talk.pkl&quot;</span><span class="p">,</span> <span class="s2">&quot;wb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">pickle</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">fig</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">on_both_average</span><span class="p">,</span> <span class="n">ct_right</span><span class="p">,</span> <span class="n">ct_left</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Sergei Kulkov.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

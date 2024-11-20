@@ -1,0 +1,7 @@
+functions.compact\_share module
+===============================
+
+.. automodule:: functions.compact_share
+   :members:
+   :undoc-members:
+   :show-inheritance:

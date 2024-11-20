@@ -1,0 +1,201 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>daplis.functions.calc_diff module &mdash; Data Analysis Package for LinoSPAD2 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=8d563738"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="daplis.functions.calibrate module" href="daplis.functions.calibrate.html" />
+    <link rel="prev" title="daplis functions" href="daplis.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Data Analysis Package for LinoSPAD2
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation and dependencies</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="daplis.html">daplis functions</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">daplis.functions.calc_diff module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#daplis.functions.calc_diff.calculate_differences_2212"><code class="docutils literal notranslate"><span class="pre">calculate_differences_2212()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#daplis.functions.calc_diff.calculate_differences_2212_fast"><code class="docutils literal notranslate"><span class="pre">calculate_differences_2212_fast()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="daplis.functions.calibrate.html">daplis.functions.calibrate module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="daplis.functions.cross_talk.html">daplis.functions.cross_talk module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="daplis.functions.delta_t.html">daplis.functions.delta_t module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="daplis.functions.fits.html">daplis.functions.fits module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="daplis.functions.plot_tmsp.html">daplis.functions.sensor_plot module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="daplis.functions.unpack.html">daplis.functions.unpack module</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="contribute.html">How to contribute</a></li>
+<li class="toctree-l1"><a class="reference internal" href="license.html">License and contact info</a></li>
+<li class="toctree-l1"><a class="reference internal" href="acknowledgement.html">Acknowledgement</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Data Analysis Package for LinoSPAD2</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="daplis.html">daplis functions</a></li>
+      <li class="breadcrumb-item active">daplis.functions.calc_diff module</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/daplis.functions.calc_diff.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-daplis.functions.calc_diff">
+<span id="daplis-functions-calc-diff-module"></span><h1>daplis.functions.calc_diff module<a class="headerlink" href="#module-daplis.functions.calc_diff" title="Link to this heading"></a></h1>
+<p>Module for computing timestamp differences.</p>
+<p>Compares all timestamps from the same cycle for the given pair of pixels
+against a given value (delta_window). Differences in that window are saved
+and returned as a list.</p>
+<p>This file can also be imported as a module and contains the following
+functions:</p>
+<blockquote>
+<div><p>TODO remove
+* calculate_differences_2212 - calculate timestamp differences for
+the given pair of pixels. Works only with firmware version ‘2212’.</p>
+<ul class="simple">
+<li><p>calculate_differences_2212_fast - calculate timestamp differences for</p></li>
+</ul>
+<p>the given pair of pixels. Works only with firmware version ‘2212’.
+Uses a faster algorithm than the function above.</p>
+</div></blockquote>
+<dl class="py function">
+<dt class="sig sig-object py" id="daplis.functions.calc_diff.calculate_differences_2212">
+<span class="sig-prename descclassname"><span class="pre">daplis.functions.calc_diff.</span></span><span class="sig-name descname"><span class="pre">calculate_differences_2212</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pixels</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pix_coor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delta_window</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">50000.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/daplis/functions/calc_diff.html#calculate_differences_2212"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#daplis.functions.calc_diff.calculate_differences_2212" title="Link to this definition"></a></dt>
+<dd><p>Calculate timestamp differences for firmware version 2212.</p>
+<p>Calculate timestamp differences for the given pixels and LinoSPAD2
+firmware version 2212.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<em>list</em><em> of </em><em>array-like</em>) – List of data arrays, each corresponding to a different TDC.</p></li>
+<li><p><strong>pixels</strong> (<em>List</em><em>[</em><em>int</em><em>] </em><em>| </em><em>List</em><em>[</em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em>) – List of pixel numbers for which the timestamp differences should
+be calculated or list of two lists with pixel numbers for peak
+vs. peak calculations.</p></li>
+<li><p><strong>pix_coor</strong> (<em>array-like</em>) – Array for transforming the pixel address in terms of TDC (0 to 3)
+to pixel number in terms of half of the sensor (0 to 255).</p></li>
+<li><p><strong>delta_window</strong> (<em>float</em><em>, </em><em>optional</em>) – Width of the time window for counting timestamp differences.
+The default is 50e3 (50 ns).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>deltas_all</strong> – Dictionary containing timestamp differences for each pair of pixels.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="daplis.functions.calc_diff.calculate_differences_2212_fast">
+<span class="sig-prename descclassname"><span class="pre">daplis.functions.calc_diff.</span></span><span class="sig-name descname"><span class="pre">calculate_differences_2212_fast</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pixels</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pix_coor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delta_window</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">50000.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cycle_length</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">4000000000.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/daplis/functions/calc_diff.html#calculate_differences_2212_fast"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#daplis.functions.calc_diff.calculate_differences_2212_fast" title="Link to this definition"></a></dt>
+<dd><p>Calculate timestamp differences for firmware version 2212.</p>
+<p>Calculate timestamp differences for the given pixels and LinoSPAD2
+firmware version 2212.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<em>ndarray</em>) – Matrix of timestamps, where rows correspond to the TDCs.</p></li>
+<li><p><strong>pixels</strong> (<em>List</em><em>[</em><em>int</em><em>] </em><em>| </em><em>List</em><em>[</em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em>) – List of pixel numbers for which the timestamp differences should
+be calculated or list of two lists with pixel numbers for peak
+vs. peak calculations.</p></li>
+<li><p><strong>pix_coor</strong> (<em>ndarray</em>) – Array for transforming the pixel address in terms of TDC (0 to 3)
+to pixel number in terms of half of the sensor (0 to 255).</p></li>
+<li><p><strong>delta_window</strong> (<em>float</em><em>, </em><em>optional</em>) – Width of the time window for counting timestamp differences.
+The default is 50e3 (50 ns).</p></li>
+<li><p><strong>cycle_length</strong> (<em>float</em><em>, </em><em>optional</em>) – Length of each acquisition cycle. The default is 4e9 (4 ms).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>deltas_all</strong> – Dictionary containing timestamp differences for each pair of pixels.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="daplis.html" class="btn btn-neutral float-left" title="daplis functions" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="daplis.functions.calibrate.html" class="btn btn-neutral float-right" title="daplis.functions.calibrate module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Sergei Kulkov.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

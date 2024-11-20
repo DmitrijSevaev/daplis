@@ -1,0 +1,7 @@
+functions.sensor\_plot module
+=============================
+
+.. automodule:: functions.sensor_plot
+   :members:
+   :undoc-members:
+   :show-inheritance:

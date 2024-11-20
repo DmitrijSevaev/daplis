@@ -1,0 +1,331 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>daplis.functions.calibrate module &mdash; Data Analysis Package for LinoSPAD2 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=8d563738"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="daplis.functions.cross_talk module" href="daplis.functions.cross_talk.html" />
+    <link rel="prev" title="daplis.functions.calc_diff module" href="daplis.functions.calc_diff.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Data Analysis Package for LinoSPAD2
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation and dependencies</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="daplis.html">daplis functions</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="daplis.functions.calc_diff.html">daplis.functions.calc_diff module</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">daplis.functions.calibrate module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#daplis.functions.calibrate.calculate_and_save_offset_calibration"><code class="docutils literal notranslate"><span class="pre">calculate_and_save_offset_calibration()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#daplis.functions.calibrate.calibrate_and_save_TDC_data"><code class="docutils literal notranslate"><span class="pre">calibrate_and_save_TDC_data()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#daplis.functions.calibrate.load_calibration_data"><code class="docutils literal notranslate"><span class="pre">load_calibration_data()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#daplis.functions.calibrate.save_offset_timestamp_differences"><code class="docutils literal notranslate"><span class="pre">save_offset_timestamp_differences()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#daplis.functions.calibrate.unpack_data_for_offset_calibration"><code class="docutils literal notranslate"><span class="pre">unpack_data_for_offset_calibration()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="daplis.functions.cross_talk.html">daplis.functions.cross_talk module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="daplis.functions.delta_t.html">daplis.functions.delta_t module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="daplis.functions.fits.html">daplis.functions.fits module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="daplis.functions.plot_tmsp.html">daplis.functions.sensor_plot module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="daplis.functions.unpack.html">daplis.functions.unpack module</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="contribute.html">How to contribute</a></li>
+<li class="toctree-l1"><a class="reference internal" href="license.html">License and contact info</a></li>
+<li class="toctree-l1"><a class="reference internal" href="acknowledgement.html">Acknowledgement</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Data Analysis Package for LinoSPAD2</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="daplis.html">daplis functions</a></li>
+      <li class="breadcrumb-item active">daplis.functions.calibrate module</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/daplis.functions.calibrate.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-daplis.functions.calibrate">
+<span id="daplis-functions-calibrate-module"></span><h1>daplis.functions.calibrate module<a class="headerlink" href="#module-daplis.functions.calibrate" title="Link to this heading"></a></h1>
+<p>Module for working with the calibration data.</p>
+<p>Functions in this module can be used to analyze the LinoSPAD2 data
+to collect either a calibration matrix for compensating TDC
+nonlinearities or a calibration matrix for offset calibration. First
+nonlinearity is introduced by nonequal bins of the 140-bin long TDC line
+while the second - from the different-length electrical path in the PCB.</p>
+<p>The calibration matrices (for TDC calibration) and arrays (for offset
+calibration) should be put into ~/LinoSPAD2/src/LinoSPAD2/params
+/calibration_data folder, where it will be pulled from by other
+functions during analysis.</p>
+<p>This file can also be imported as a module and contains the following
+functions:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>calibrate_and_save_TDC_calibration - calculate a calibration</p></li>
+</ul>
+<p>matrix of the TDC calibrations and save it as a ‘.csv’ table.</p>
+<ul class="simple">
+<li><p>unpack_data_for_offset_calibration - unpack binary data applying</p></li>
+</ul>
+<p>TDC calibration in the process. Used for calculations of the offset
+calibration.</p>
+<ul class="simple">
+<li><p>save_offset_timestamp_differences - calculate and save timestamps</p></li>
+</ul>
+<p>differences for pairs of pixels 0, 4 to 255, and 1 to 3 for finding
+the delta t peaks for calculating the offset calibration.</p>
+<ul class="simple">
+<li><p>calculate_and_save_offset_calibration - calculate and save the 256</p></li>
+</ul>
+<p>offset compensations for all pixels of the given LinoSPAD2 sensor
+half. The output is saved as a .npy file for later use.</p>
+<ul class="simple">
+<li><p>load_calibration_data - load the calibration matrix from a ‘.csv’</p></li>
+</ul>
+<p>table.</p>
+</div></blockquote>
+<dl class="py function">
+<dt class="sig sig-object py" id="daplis.functions.calibrate.calculate_and_save_offset_calibration">
+<span class="sig-prename descclassname"><span class="pre">daplis.functions.calibrate.</span></span><span class="sig-name descname"><span class="pre">calculate_and_save_offset_calibration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">daughterboard_number</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">motherboard_number</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">firmware_version</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timestamps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1000</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/daplis/functions/calibrate.html#calculate_and_save_offset_calibration"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#daplis.functions.calibrate.calculate_and_save_offset_calibration" title="Link to this definition"></a></dt>
+<dd><p>Calculate offset calibration and save as .npy.</p>
+<p>Calculate offset calibration for all 256 pixels for the given
+motherboard-daughterboard and firmware version.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path</strong> (<em>str</em>) – Path to the folder with the ‘.dat’ data files.</p></li>
+<li><p><strong>daughterboard_number</strong> (<em>str</em>) – LinoSPAD2 daughterboard number.</p></li>
+<li><p><strong>motherboard_number</strong> (<em>str</em>) – LinoSPAD2 motherboard (FPGA) number, including the “#”.</p></li>
+<li><p><strong>firmware_version</strong> (<em>str</em>) – LinoSPAD2 firmware version.</p></li>
+<li><p><strong>timestamps</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of timestamps per cycle per TDC. The default 1000.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="daplis.functions.calibrate.calibrate_and_save_TDC_data">
+<span class="sig-prename descclassname"><span class="pre">daplis.functions.calibrate.</span></span><span class="sig-name descname"><span class="pre">calibrate_and_save_TDC_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">daughterboard_number</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">motherboard_number</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">firmware_version</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timestamps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1000</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/daplis/functions/calibrate.html#calibrate_and_save_TDC_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#daplis.functions.calibrate.calibrate_and_save_TDC_data" title="Link to this definition"></a></dt>
+<dd><p>Calculate and save calibration data for TDC nonlinearities.</p>
+<p>Function for calculating the calibration matrix and saving it into a
+‘.csv’ file. The data files used for the calculation should be taken
+with the sensor uniformly illuminated by ambient light.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path</strong> (<em>str</em>) – Path to the folder with the ‘.dat’ data files.</p></li>
+<li><p><strong>daughterboard_number</strong> (<em>str</em>) – LinoSPAD2 daughterboard number.</p></li>
+<li><p><strong>motherboard_number</strong> (<em>str</em>) – LinoSPAD2 motherboard number, including the “#”.</p></li>
+<li><p><strong>firmware_version</strong> (<em>str</em>) – LinoSPAD2 firmware version. Versions “2208”, “2212s” (skip), and
+“2212b” (block) are recognized.</p></li>
+<li><p><strong>timestamps</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of timestamps per acquisition cycle per pixel. The
+default is 1000.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>TypeError</strong> – If ‘daughterboard_number’, ‘motherboard_number’, or
+    ‘firmware_version’ parameters are not of string type.</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>The resulting calibration matrix is saved as a ‘.csv’ file, with the
+filename formatted as “TDC_{db}_{mb}_{fw_ver}.csv”, where {db},
+{mb}, and {fw_ver} represent the daughterboard number, motherboard
+number, and firmware version, respectively.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="daplis.functions.calibrate.load_calibration_data">
+<span class="sig-prename descclassname"><span class="pre">daplis.functions.calibrate.</span></span><span class="sig-name descname"><span class="pre">load_calibration_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">calibration_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">daughterboard_number</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">motherboard_number</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">firmware_version</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">include_offset</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/daplis/functions/calibrate.html#load_calibration_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#daplis.functions.calibrate.load_calibration_data" title="Link to this definition"></a></dt>
+<dd><p>Load the calibration data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>calibration_path</strong> (<em>str</em>) – Path to the ‘.csv’ file with the calibration matrix.</p></li>
+<li><p><strong>daughterboard_number</strong> (<em>str</em>) – The LinoSPAD2 daughterboard number.</p></li>
+<li><p><strong>motherboard_number</strong> (<em>str</em>) – LinoSPAD2 motherboard (FPGA) number, including the “#”.</p></li>
+<li><p><strong>firmware_version</strong> (<em>str</em>) – LinoSPAD2 firmware version.</p></li>
+<li><p><strong>include_offset</strong> (<em>bool</em><em>, </em><em>optional</em>) – Switch for including the offset calibration. The default is
+True.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>data_matrix</strong> (<em>numpy.ndarray</em>) – 256x140 matrix containing the calibrated data.</p></li>
+<li><p><strong>offset_arr</strong> (<em>numpy.ndarray, optional</em>) – Array of 256 offset values, one for each pixel. Returned only if
+include_offset is True.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="daplis.functions.calibrate.save_offset_timestamp_differences">
+<span class="sig-prename descclassname"><span class="pre">daplis.functions.calibrate.</span></span><span class="sig-name descname"><span class="pre">save_offset_timestamp_differences</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pixels</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rewrite</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">daughterboard_number</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">motherboard_number</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">firmware_version</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timestamps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delta_window</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">50000.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/daplis/functions/calibrate.html#save_offset_timestamp_differences"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#daplis.functions.calibrate.save_offset_timestamp_differences" title="Link to this definition"></a></dt>
+<dd><p>Calculate and save timestamp differences into ‘.csv’ file.</p>
+<p>Unpacks data, calculates timestamp differences for the requested
+pixels, and saves them into a ‘.csv’ table. Works with firmware
+version 2212. Calculates delta ts with TDC calibration applied
+for calculations of offset compensations.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path</strong> (<em>str</em>) – Path to the folder with the ‘.dat’ data files.</p></li>
+<li><p><strong>pixels</strong> (<em>list</em>) – List of pixel numbers for which the timestamp differences should
+be calculated and saved or list of two lists with pixel numbers
+for peak vs. peak calculations.</p></li>
+<li><p><strong>rewrite</strong> (<em>bool</em>) – Switch for overwriting the ‘.csv’ file if it already exists.</p></li>
+<li><p><strong>daughterboard_number</strong> (<em>str</em>) – LinoSPAD2 daughterboard number.</p></li>
+<li><p><strong>motherboard_number</strong> (<em>str</em>) – LinoSPAD2 motherboard (FPGA) number, including the “#”.</p></li>
+<li><p><strong>firmware_version</strong> (<em>str</em>) – LinoSPAD2 firmware version. Versions “2212s” (skip) and “2212b”
+(block) are recognized.</p></li>
+<li><p><strong>timestamps</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of timestamps per acquisition cycle per pixel. The default
+is 1000.</p></li>
+<li><p><strong>delta_window</strong> (<em>float</em><em>, </em><em>optional</em>) – Size of a window to which timestamp differences are compared.
+Differences in that window are saved. The default is 50e3 (50 ns).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>TypeError</strong> – Only boolean values of ‘rewrite’ and string values of
+    ‘daughterboard_number’, ‘motherboard_number’, and
+    ‘firmware_version’ are accepted. The first error is raised so
+    that the plot does not accidentally get rewritten in the case
+    no clear input was given.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="daplis.functions.calibrate.unpack_data_for_offset_calibration">
+<span class="sig-prename descclassname"><span class="pre">daplis.functions.calibrate.</span></span><span class="sig-name descname"><span class="pre">unpack_data_for_offset_calibration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">daughterboard_number</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">motherboard_number</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">firmware_version</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timestamps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1000</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/daplis/functions/calibrate.html#unpack_data_for_offset_calibration"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#daplis.functions.calibrate.unpack_data_for_offset_calibration" title="Link to this definition"></a></dt>
+<dd><p>Unpack data for offset calibration from LinoSPAD2 firmware version 2212.</p>
+<p>Unpacks binary-encoded data from LinoSPAD2 firmware version 2212.
+Returns a 3D array where rows are TDC numbers, columns are the data,
+and each cell contains a pixel number in the TDC (from 0 to 3) and the
+timestamp recorded by that pixel. TDC calibration is applied as it
+is necessary for the offset calibration to succeed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path</strong> (<em>str</em>) – Path to the ‘.dat’ data file.</p></li>
+<li><p><strong>daughterboard_number</strong> (<em>str</em>) – LinoSPAD2 daughterboard number.</p></li>
+<li><p><strong>motherboard_number</strong> (<em>str</em>) – LinoSPAD2 motherboard (FPGA) number, including the “#”.</p></li>
+<li><p><strong>firmware_version</strong> (<em>str</em>) – LinoSPAD2 firmware version. Either ‘2212s’ or ‘2212b’ are accepted.</p></li>
+<li><p><strong>timestamps</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of timestamps per TDC per acquisition cycle. The default
+is 1000.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>TypeError</strong> – If ‘daughterboard_number’, ‘motherboard_number’, or
+    ‘firmware_version’ parameters are not of string type.</p></li>
+<li><p><strong>FileNotFoundError</strong> – If no calibration data is found, raise an error.</p></li>
+</ul>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>data_all</strong> – 3D array of pixel coordinates in the TDC and the timestamps.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>array-like</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>This function unpacks binary-encoded data from LinoSPAD2 firmware
+version 2212 for offset calibration. The resulting data is returned
+as a 3D array where rows are TDC numbers, columns are the data, and
+each cell contains a pixel number in the TDC (from 0 to 3) and the
+timestamp recorded by that pixel. TDC calibration is applied as it
+is necessary for the offset calibration to succeed. The calibration
+data is loaded from the specified path based on the daughterboard,
+motherboard, and firmware version parameters.</p>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="daplis.functions.calc_diff.html" class="btn btn-neutral float-left" title="daplis.functions.calc_diff module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="daplis.functions.cross_talk.html" class="btn btn-neutral float-right" title="daplis.functions.cross_talk module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Sergei Kulkov.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

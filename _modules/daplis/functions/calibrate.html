@@ -1,0 +1,928 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>daplis.functions.calibrate &mdash; Data Analysis Package for LinoSPAD2 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=8d563738"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Data Analysis Package for LinoSPAD2
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation and dependencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../daplis.html">daplis functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contribute.html">How to contribute</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../license.html">License and contact info</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../acknowledgement.html">Acknowledgement</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Data Analysis Package for LinoSPAD2</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">daplis.functions.calibrate</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for daplis.functions.calibrate</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Module for working with the calibration data.</span>
+
+<span class="sd">Functions in this module can be used to analyze the LinoSPAD2 data</span>
+<span class="sd">to collect either a calibration matrix for compensating TDC </span>
+<span class="sd">nonlinearities or a calibration matrix for offset calibration. First</span>
+<span class="sd">nonlinearity is introduced by nonequal bins of the 140-bin long TDC line</span>
+<span class="sd">while the second - from the different-length electrical path in the PCB.</span>
+
+<span class="sd">The calibration matrices (for TDC calibration) and arrays (for offset</span>
+<span class="sd">calibration) should be put into ~/LinoSPAD2/src/LinoSPAD2/params</span>
+<span class="sd">/calibration_data folder, where it will be pulled from by other</span>
+<span class="sd">functions during analysis.</span>
+
+<span class="sd">This file can also be imported as a module and contains the following</span>
+<span class="sd">functions:</span>
+
+<span class="sd">    * calibrate_and_save_TDC_calibration - calculate a calibration</span>
+<span class="sd">    matrix of the TDC calibrations and save it as a &#39;.csv&#39; table.</span>
+
+<span class="sd">    * unpack_data_for_offset_calibration - unpack binary data applying</span>
+<span class="sd">    TDC calibration in the process. Used for calculations of the offset</span>
+<span class="sd">    calibration.</span>
+
+<span class="sd">    * save_offset_timestamp_differences - calculate and save timestamps</span>
+<span class="sd">    differences for pairs of pixels 0, 4 to 255, and 1 to 3 for finding</span>
+<span class="sd">    the delta t peaks for calculating the offset calibration.</span>
+
+<span class="sd">    * calculate_and_save_offset_calibration - calculate and save the 256</span>
+<span class="sd">    offset compensations for all pixels of the given LinoSPAD2 sensor</span>
+<span class="sd">    half. The output is saved as a .npy file for later use.</span>
+
+<span class="sd">    * load_calibration_data - load the calibration matrix from a &#39;.csv&#39;</span>
+<span class="sd">    table.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">glob</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="n">ceil</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">from</span> <span class="nn">scipy.optimize</span> <span class="kn">import</span> <span class="n">curve_fit</span>
+<span class="kn">from</span> <span class="nn">tqdm</span> <span class="kn">import</span> <span class="n">tqdm</span>
+
+
+<div class="viewcode-block" id="calibrate_and_save_TDC_data">
+<a class="viewcode-back" href="../../../daplis.functions.calibrate.html#daplis.functions.calibrate.calibrate_and_save_TDC_data">[docs]</a>
+<span class="k">def</span> <span class="nf">calibrate_and_save_TDC_data</span><span class="p">(</span>
+    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">daughterboard_number</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">motherboard_number</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">firmware_version</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">timestamps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Calculate and save calibration data for TDC nonlinearities.</span>
+
+<span class="sd">    Function for calculating the calibration matrix and saving it into a</span>
+<span class="sd">    &#39;.csv&#39; file. The data files used for the calculation should be taken</span>
+<span class="sd">    with the sensor uniformly illuminated by ambient light.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    path : str</span>
+<span class="sd">        Path to the folder with the &#39;.dat&#39; data files.</span>
+<span class="sd">    daughterboard_number : str</span>
+<span class="sd">        LinoSPAD2 daughterboard number.</span>
+<span class="sd">    motherboard_number : str</span>
+<span class="sd">        LinoSPAD2 motherboard number, including the &quot;#&quot;.</span>
+<span class="sd">    firmware_version : str</span>
+<span class="sd">        LinoSPAD2 firmware version. Versions &quot;2208&quot;, &quot;2212s&quot; (skip), and</span>
+<span class="sd">        &quot;2212b&quot; (block) are recognized.</span>
+<span class="sd">    timestamps : int, optional</span>
+<span class="sd">        Number of timestamps per acquisition cycle per pixel. The</span>
+<span class="sd">        default is 1000.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    None.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    TypeError</span>
+<span class="sd">        If &#39;daughterboard_number&#39;, &#39;motherboard_number&#39;, or</span>
+<span class="sd">        &#39;firmware_version&#39; parameters are not of string type.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    The resulting calibration matrix is saved as a &#39;.csv&#39; file, with the</span>
+<span class="sd">    filename formatted as &quot;TDC_{db}_{mb}_{fw_ver}.csv&quot;, where {db},</span>
+<span class="sd">    {mb}, and {fw_ver} represent the daughterboard number, motherboard</span>
+<span class="sd">    number, and firmware version, respectively.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Parameter type check</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">daughterboard_number</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;&#39;daughterboard_number&#39; should be a string.&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">motherboard_number</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;&#39;motherboard_number&#39; should be a string.&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">firmware_version</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+            <span class="s2">&quot;&#39;firmware_version&#39; should be a string, &#39;2208&#39;, &#39;2212b&#39; or&quot;</span>
+            <span class="s2">&quot;&#39;2212s&#39;.&quot;</span>
+        <span class="p">)</span>
+
+    <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="n">files</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s2">&quot;*.dat&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Go over all &#39;.dat&#39; files</span>
+    <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">file</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span>
+        <span class="n">tqdm</span><span class="p">(</span>
+            <span class="n">files</span><span class="p">,</span>
+            <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Calculating TDC calibration, going through files&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">):</span>
+        <span class="k">if</span> <span class="n">firmware_version</span> <span class="o">==</span> <span class="s2">&quot;2208&quot;</span><span class="p">:</span>
+            <span class="c1"># read data by 32 bit words</span>
+            <span class="n">raw_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fromfile</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint32</span><span class="p">)</span>
+            <span class="c1"># lowest 28 bits are the timestamp; convert to ps</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="p">(</span><span class="n">raw_data</span> <span class="o">&amp;</span> <span class="mh">0xFFFFFFF</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span> <span class="o">%</span> <span class="mi">140</span>
+            <span class="c1"># mask nonvalid data with &#39;-1&#39;; 0x80000000 - the 31st, validity bin</span>
+            <span class="n">data</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">raw_data</span> <span class="o">&lt;</span> <span class="mh">0x80000000</span><span class="p">)]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+            <span class="c1"># number of acquisition cycles</span>
+            <span class="n">cycles</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="o">/</span> <span class="n">timestamps</span> <span class="o">/</span> <span class="mi">256</span><span class="p">)</span>
+
+            <span class="n">data_matrix</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">data</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">cycles</span><span class="p">,</span> <span class="mi">256</span><span class="p">,</span> <span class="n">timestamps</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">transpose</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+                <span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">256</span><span class="p">,</span> <span class="n">timestamps</span> <span class="o">*</span> <span class="n">cycles</span><span class="p">)</span>
+            <span class="p">)</span>
+
+            <span class="c1"># calibration matrix</span>
+            <span class="n">cal_mat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">256</span><span class="p">,</span> <span class="mi">140</span><span class="p">))</span>
+            <span class="n">bins</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">141</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">256</span><span class="p">):</span>
+                <span class="c1"># sort the data into 140 bins</span>
+                <span class="n">counts</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">histogram</span><span class="p">(</span><span class="n">data_matrix</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">bins</span><span class="o">=</span><span class="n">bins</span><span class="p">)</span>
+                <span class="c1"># redefine the bin edges using the bin population from above</span>
+                <span class="n">cal_mat</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">counts</span><span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">counts</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">*</span> <span class="mi">2500</span>
+
+            <span class="n">cal_mat_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">cal_mat</span><span class="p">)</span>
+            <span class="n">cal_mat_df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;TDC_</span><span class="si">{</span><span class="n">daughterboard_number</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">motherboard_number</span><span class="si">}</span><span class="s2">_&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">firmware_version</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">j</span><span class="si">}</span><span class="s2">.csv&quot;</span>
+            <span class="p">)</span>
+
+        <span class="k">elif</span> <span class="n">firmware_version</span> <span class="o">==</span> <span class="s2">&quot;2212b&quot;</span> <span class="ow">or</span> <span class="n">firmware_version</span> <span class="o">==</span> <span class="s2">&quot;2212s&quot;</span><span class="p">:</span>
+            <span class="c1"># read data by 32 bit words</span>
+            <span class="n">raw_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fromfile</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint32</span><span class="p">)</span>
+            <span class="c1"># lowest 28 bits are the timestamp; convert to ps</span>
+            <span class="n">data_t</span> <span class="o">=</span> <span class="p">(</span><span class="n">raw_data</span> <span class="o">&amp;</span> <span class="mh">0xFFFFFFF</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span> <span class="o">%</span> <span class="mi">140</span>
+            <span class="c1"># pix address in the given TDC is 2 bits above timestamp</span>
+            <span class="n">data_p</span> <span class="o">=</span> <span class="p">((</span><span class="n">raw_data</span> <span class="o">&gt;&gt;</span> <span class="mi">28</span><span class="p">)</span> <span class="o">&amp;</span> <span class="mh">0x3</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">longlong</span><span class="p">)</span>
+            <span class="n">data_t</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">raw_data</span> <span class="o">&lt;</span> <span class="mh">0x80000000</span><span class="p">)]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+            <span class="c1"># number of acquisition cycle in each data file</span>
+            <span class="n">cycles</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data_t</span><span class="p">)</span> <span class="o">/</span> <span class="n">timestamps</span> <span class="o">/</span> <span class="mi">65</span><span class="p">)</span>
+            <span class="c1"># transform into matrix 65 by cycles*timestamps</span>
+            <span class="n">data_matrix_p</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">data_p</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">cycles</span><span class="p">,</span> <span class="mi">65</span><span class="p">,</span> <span class="n">timestamps</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">transpose</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+                <span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">65</span><span class="p">,</span> <span class="n">timestamps</span> <span class="o">*</span> <span class="n">cycles</span><span class="p">)</span>
+            <span class="p">)</span>
+
+            <span class="n">data_matrix_t</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">data_t</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">cycles</span><span class="p">,</span> <span class="mi">65</span><span class="p">,</span> <span class="n">timestamps</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">transpose</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+                <span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">65</span><span class="p">,</span> <span class="n">timestamps</span> <span class="o">*</span> <span class="n">cycles</span><span class="p">)</span>
+            <span class="p">)</span>
+
+            <span class="c1"># cut the 65th TDC that does not hold any actual data from pixels</span>
+            <span class="n">data_matrix_p</span> <span class="o">=</span> <span class="n">data_matrix_p</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">data_matrix_t</span> <span class="o">=</span> <span class="n">data_matrix_t</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+            <span class="n">data_all</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">((</span><span class="n">data_matrix_p</span><span class="p">,</span> <span class="n">data_matrix_t</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">longlong</span>
+            <span class="p">)</span>
+
+            <span class="c1"># calibration matrix</span>
+            <span class="n">cal_mat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">256</span><span class="p">,</span> <span class="mi">140</span><span class="p">))</span>
+            <span class="n">bins</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">141</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">firmware_version</span> <span class="o">==</span> <span class="s2">&quot;2212b&quot;</span><span class="p">:</span>
+                <span class="n">pix_coor</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">256</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">64</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">pix_coor</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">256</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">64</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
+
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">256</span><span class="p">):</span>
+                <span class="c1"># transform pixel number to TDC number and pixel coordinates in</span>
+                <span class="c1"># that TDC (from 0 to 3)</span>
+                <span class="n">tdc</span><span class="p">,</span> <span class="n">pix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argwhere</span><span class="p">(</span><span class="n">pix_coor</span> <span class="o">==</span> <span class="n">i</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="c1"># find data from that pixel</span>
+                <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">data_all</span><span class="p">[</span><span class="n">tdc</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">pix</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="c1"># cut non-valid timestamps (&#39;-1&#39;s)</span>
+                <span class="n">ind</span> <span class="o">=</span> <span class="n">ind</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">data_all</span><span class="p">[</span><span class="n">tdc</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="n">ind</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)[</span><span class="mi">0</span><span class="p">]]</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">ind</span><span class="p">):</span>
+                    <span class="k">continue</span>
+
+                <span class="n">counts</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">histogram</span><span class="p">(</span><span class="n">data_all</span><span class="p">[</span><span class="n">tdc</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="n">ind</span><span class="p">],</span> <span class="n">bins</span><span class="o">=</span><span class="n">bins</span><span class="p">)</span>
+                <span class="n">cal_mat</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">counts</span><span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">counts</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">*</span> <span class="mi">2500</span>
+
+            <span class="n">cal_mat_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">cal_mat</span><span class="p">)</span>
+            <span class="n">cal_mat_df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;TDC_</span><span class="si">{</span><span class="n">daughterboard_number</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">motherboard_number</span><span class="si">}</span><span class="s2">_&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">firmware_version</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">j</span><span class="si">}</span><span class="s2">.csv&quot;</span>
+            <span class="p">)</span>
+
+    <span class="c1"># Combine all &#39;.csv&#39; files and average</span>
+    <span class="n">files_csv</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s2">&quot;*.csv&quot;</span><span class="p">)</span>
+
+    <span class="n">data_csv</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">256</span><span class="p">,</span> <span class="mi">140</span><span class="p">))</span>
+
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">file_csv</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">files_csv</span><span class="p">):</span>
+        <span class="n">data_csv</span> <span class="o">+=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">file_csv</span><span class="p">,</span> <span class="n">index_col</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="n">data_csv</span> <span class="o">=</span> <span class="n">data_csv</span> <span class="o">/</span> <span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+
+    <span class="c1"># Save the averaged matrix of calibration data into a &#39;.csv&#39; file</span>
+    <span class="n">data_csv</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;TDC_</span><span class="si">{</span><span class="n">daughterboard_number</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">motherboard_number</span><span class="si">}</span><span class="s2">_&quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">firmware_version</span><span class="si">}</span><span class="s2">.csv&quot;</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Remove the numbered &#39;.csv&#39; files</span>
+    <span class="n">file_pattern</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;TDC_</span><span class="si">{</span><span class="n">daughterboard_number</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">motherboard_number</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="sa">f</span><span class="s2">&quot;_</span><span class="si">{</span><span class="n">firmware_version</span><span class="si">}</span><span class="s2">_*.csv&quot;</span>
+    <span class="n">files_to_delete</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">file_pattern</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">file_to_delete</span> <span class="ow">in</span> <span class="n">files_to_delete</span><span class="p">:</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">file_to_delete</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="unpack_data_for_offset_calibration">
+<a class="viewcode-back" href="../../../daplis.functions.calibrate.html#daplis.functions.calibrate.unpack_data_for_offset_calibration">[docs]</a>
+<span class="k">def</span> <span class="nf">unpack_data_for_offset_calibration</span><span class="p">(</span>
+    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">daughterboard_number</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">motherboard_number</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">firmware_version</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">timestamps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Unpack data for offset calibration from LinoSPAD2 firmware version 2212.</span>
+
+<span class="sd">    Unpacks binary-encoded data from LinoSPAD2 firmware version 2212.</span>
+<span class="sd">    Returns a 3D array where rows are TDC numbers, columns are the data,</span>
+<span class="sd">    and each cell contains a pixel number in the TDC (from 0 to 3) and the</span>
+<span class="sd">    timestamp recorded by that pixel. TDC calibration is applied as it</span>
+<span class="sd">    is necessary for the offset calibration to succeed.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    path : str</span>
+<span class="sd">        Path to the &#39;.dat&#39; data file.</span>
+<span class="sd">    daughterboard_number : str</span>
+<span class="sd">        LinoSPAD2 daughterboard number.</span>
+<span class="sd">    motherboard_number : str</span>
+<span class="sd">        LinoSPAD2 motherboard (FPGA) number, including the &quot;#&quot;.</span>
+<span class="sd">    firmware_version : str</span>
+<span class="sd">        LinoSPAD2 firmware version. Either &#39;2212s&#39; or &#39;2212b&#39; are accepted.</span>
+<span class="sd">    timestamps : int, optional</span>
+<span class="sd">        Number of timestamps per TDC per acquisition cycle. The default</span>
+<span class="sd">        is 1000.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    TypeError</span>
+<span class="sd">        If &#39;daughterboard_number&#39;, &#39;motherboard_number&#39;, or</span>
+<span class="sd">        &#39;firmware_version&#39; parameters are not of string type.</span>
+<span class="sd">    FileNotFoundError</span>
+<span class="sd">        If no calibration data is found, raise an error.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    data_all : array-like</span>
+<span class="sd">        3D array of pixel coordinates in the TDC and the timestamps.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    This function unpacks binary-encoded data from LinoSPAD2 firmware</span>
+<span class="sd">    version 2212 for offset calibration. The resulting data is returned</span>
+<span class="sd">    as a 3D array where rows are TDC numbers, columns are the data, and</span>
+<span class="sd">    each cell contains a pixel number in the TDC (from 0 to 3) and the</span>
+<span class="sd">    timestamp recorded by that pixel. TDC calibration is applied as it</span>
+<span class="sd">    is necessary for the offset calibration to succeed. The calibration</span>
+<span class="sd">    data is loaded from the specified path based on the daughterboard,</span>
+<span class="sd">    motherboard, and firmware version parameters.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Parameter type check</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">daughterboard_number</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;&#39;daughterboard_number&#39; should be a string.&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">motherboard_number</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;&#39;motherboard_number&#39; should be a string.&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">firmware_version</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+            <span class="s2">&quot;&#39;firmware_version&#39; should be a string, &#39;2212s&#39; or &#39;2212b&#39;.&quot;</span>
+        <span class="p">)</span>
+
+    <span class="c1"># Unpack binary data</span>
+    <span class="n">raw_file_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fromfile</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint32</span><span class="p">)</span>
+    <span class="c1"># Timestamps are lower 28 bits</span>
+    <span class="n">data_timestamps</span> <span class="o">=</span> <span class="p">(</span><span class="n">raw_file_data</span> <span class="o">&amp;</span> <span class="mh">0xFFFFFFF</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">longlong</span><span class="p">)</span>
+    <span class="c1"># Pix address in the given TDC is 2 bits above timestamp</span>
+    <span class="n">data_pix</span> <span class="o">=</span> <span class="p">((</span><span class="n">raw_file_data</span> <span class="o">&gt;&gt;</span> <span class="mi">28</span><span class="p">)</span> <span class="o">&amp;</span> <span class="mh">0x3</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">longlong</span><span class="p">)</span>
+    <span class="n">data_timestamps</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">raw_file_data</span> <span class="o">&lt;</span> <span class="mh">0x80000000</span><span class="p">)]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="c1"># Number of acquisition cycle in each data file</span>
+    <span class="n">cycles</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data_timestamps</span><span class="p">)</span> <span class="o">/</span> <span class="n">timestamps</span> <span class="o">/</span> <span class="mi">65</span><span class="p">)</span>
+    <span class="c1"># Transform into matrix 65 by cycles*timestamps</span>
+    <span class="n">data_matrix_pix</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">data_pix</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">cycles</span><span class="p">,</span> <span class="mi">65</span><span class="p">,</span> <span class="n">timestamps</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">transpose</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+        <span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">65</span><span class="p">,</span> <span class="n">timestamps</span> <span class="o">*</span> <span class="n">cycles</span><span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">data_matrix_timestamps</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">data_timestamps</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">cycles</span><span class="p">,</span> <span class="mi">65</span><span class="p">,</span> <span class="n">timestamps</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">transpose</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+        <span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">65</span><span class="p">,</span> <span class="n">timestamps</span> <span class="o">*</span> <span class="n">cycles</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="c1"># Cut the 65th TDC that does not hold any actual data from pixels</span>
+    <span class="n">data_matrix_pix</span> <span class="o">=</span> <span class="n">data_matrix_pix</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">data_matrix_timestamps</span> <span class="o">=</span> <span class="n">data_matrix_timestamps</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="c1"># Insert &#39;-2&#39; at the end of each cycle</span>
+    <span class="n">data_matrix_pix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span>
+        <span class="n">data_matrix_pix</span><span class="p">,</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">timestamps</span><span class="p">,</span> <span class="n">cycles</span> <span class="o">*</span> <span class="n">timestamps</span><span class="p">,</span> <span class="n">cycles</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">longlong</span>
+        <span class="p">),</span>
+        <span class="o">-</span><span class="mi">2</span><span class="p">,</span>
+        <span class="mi">1</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">data_matrix_timestamps</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span>
+        <span class="n">data_matrix_timestamps</span><span class="p">,</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">timestamps</span><span class="p">,</span> <span class="n">cycles</span> <span class="o">*</span> <span class="n">timestamps</span><span class="p">,</span> <span class="n">cycles</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">longlong</span>
+        <span class="p">),</span>
+        <span class="o">-</span><span class="mi">2</span><span class="p">,</span>
+        <span class="mi">1</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="c1"># Combine both matrices into a single one, where each cell holds pix</span>
+    <span class="c1"># coordinates in the TDC and the timestamp</span>
+    <span class="n">data_all</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span>
+        <span class="p">(</span><span class="n">data_matrix_pix</span><span class="p">,</span> <span class="n">data_matrix_timestamps</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">2</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">longlong</span><span class="p">)</span>
+
+    <span class="c1"># Path to the calibration data directory</span>
+    <span class="n">pix_coordinate_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">256</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">64</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+    <span class="n">path_calibration_data</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">realpath</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;/../..&quot;</span> <span class="o">+</span> <span class="s2">&quot;/params/calibration_data&quot;</span>
+    <span class="p">)</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">cal_matrix</span> <span class="o">=</span> <span class="n">load_calibration_data</span><span class="p">(</span>
+            <span class="n">path_calibration_data</span><span class="p">,</span>
+            <span class="n">daughterboard_number</span><span class="p">,</span>
+            <span class="n">motherboard_number</span><span class="p">,</span>
+            <span class="n">firmware_version</span><span class="p">,</span>
+            <span class="n">include_offset</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">except</span> <span class="ne">FileNotFoundError</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span>
+            <span class="s2">&quot;No .csv file with the calibration data was found, &quot;</span>
+            <span class="s2">&quot;check the path or run the calibration.&quot;</span>
+        <span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">256</span><span class="p">):</span>
+        <span class="c1"># Transform pixel number to TDC number and pixel coordinates in</span>
+        <span class="c1"># that TDC (from 0 to 3)</span>
+        <span class="n">tdc</span><span class="p">,</span> <span class="n">pix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argwhere</span><span class="p">(</span><span class="n">pix_coordinate_array</span> <span class="o">==</span> <span class="n">i</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="c1"># Find data from that pixel</span>
+        <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">data_all</span><span class="p">[</span><span class="n">tdc</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">pix</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="c1"># Cut non-valid timestamps (&#39;-1&#39;s)</span>
+        <span class="n">ind</span> <span class="o">=</span> <span class="n">ind</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">data_all</span><span class="p">[</span><span class="n">tdc</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="n">ind</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)[</span><span class="mi">0</span><span class="p">]]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">ind</span><span class="p">):</span>
+            <span class="k">continue</span>
+
+        <span class="n">data_all</span><span class="p">[</span><span class="n">tdc</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">data_all</span><span class="p">[</span><span class="n">tdc</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="n">ind</span><span class="p">]</span> <span class="o">-</span> <span class="n">data_all</span><span class="p">[</span><span class="n">tdc</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="n">ind</span><span class="p">]</span> <span class="o">%</span> <span class="mi">140</span>
+        <span class="p">)</span> <span class="o">*</span> <span class="mi">2500</span> <span class="o">/</span> <span class="mi">140</span> <span class="o">+</span> <span class="n">cal_matrix</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">data_all</span><span class="p">[</span><span class="n">tdc</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="n">ind</span><span class="p">]</span> <span class="o">%</span> <span class="mi">140</span><span class="p">)]</span>
+
+    <span class="k">return</span> <span class="n">data_all</span></div>
+
+
+
+<div class="viewcode-block" id="save_offset_timestamp_differences">
+<a class="viewcode-back" href="../../../daplis.functions.calibrate.html#daplis.functions.calibrate.save_offset_timestamp_differences">[docs]</a>
+<span class="k">def</span> <span class="nf">save_offset_timestamp_differences</span><span class="p">(</span>
+    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">pixels</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span>
+    <span class="n">rewrite</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+    <span class="n">daughterboard_number</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">motherboard_number</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">firmware_version</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">timestamps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
+    <span class="n">delta_window</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">50e3</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Calculate and save timestamp differences into &#39;.csv&#39; file.</span>
+
+<span class="sd">    Unpacks data, calculates timestamp differences for the requested</span>
+<span class="sd">    pixels, and saves them into a &#39;.csv&#39; table. Works with firmware</span>
+<span class="sd">    version 2212. Calculates delta ts with TDC calibration applied</span>
+<span class="sd">    for calculations of offset compensations.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    path : str</span>
+<span class="sd">        Path to the folder with the &#39;.dat&#39; data files.</span>
+<span class="sd">    pixels : list</span>
+<span class="sd">        List of pixel numbers for which the timestamp differences should</span>
+<span class="sd">        be calculated and saved or list of two lists with pixel numbers</span>
+<span class="sd">        for peak vs. peak calculations.</span>
+<span class="sd">    rewrite : bool</span>
+<span class="sd">        Switch for overwriting the &#39;.csv&#39; file if it already exists.</span>
+<span class="sd">    daughterboard_number : str</span>
+<span class="sd">        LinoSPAD2 daughterboard number.</span>
+<span class="sd">    motherboard_number : str</span>
+<span class="sd">        LinoSPAD2 motherboard (FPGA) number, including the &quot;#&quot;.</span>
+<span class="sd">    firmware_version : str</span>
+<span class="sd">        LinoSPAD2 firmware version. Versions &quot;2212s&quot; (skip) and &quot;2212b&quot;</span>
+<span class="sd">        (block) are recognized.</span>
+<span class="sd">    timestamps : int, optional</span>
+<span class="sd">        Number of timestamps per acquisition cycle per pixel. The default</span>
+<span class="sd">        is 1000.</span>
+<span class="sd">    delta_window : float, optional</span>
+<span class="sd">        Size of a window to which timestamp differences are compared.</span>
+<span class="sd">        Differences in that window are saved. The default is 50e3 (50 ns).</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    TypeError</span>
+<span class="sd">        Only boolean values of &#39;rewrite&#39; and string values of</span>
+<span class="sd">        &#39;daughterboard_number&#39;, &#39;motherboard_number&#39;, and</span>
+<span class="sd">        &#39;firmware_version&#39; are accepted. The first error is raised so</span>
+<span class="sd">        that the plot does not accidentally get rewritten in the case</span>
+<span class="sd">        no clear input was given.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    None.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Parameter type check</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">pixels</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+            <span class="s2">&quot;&#39;pixels&#39; should be a list of integers or a list of two lists.&quot;</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">firmware_version</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+            <span class="s2">&quot;&#39;firmware_version&#39; should be a string, &#39;2212b&#39; or &#39;2208&#39;.&quot;</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">rewrite</span><span class="p">,</span> <span class="nb">bool</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;&#39;rewrite&#39; should be boolean.&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">daughterboard_number</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+            <span class="s2">&quot;&#39;daughterboard_number&#39; should be a string, either &#39;NL11&#39; or &#39;A5&#39;.&quot;</span>
+        <span class="p">)</span>
+
+    <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+
+    <span class="n">all_files</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s2">&quot;*.dat*&quot;</span><span class="p">)</span>
+
+    <span class="n">output_file_name</span> <span class="o">=</span> <span class="n">all_files</span><span class="p">[</span><span class="mi">0</span><span class="p">][:</span><span class="o">-</span><span class="mi">4</span><span class="p">]</span> <span class="o">+</span> <span class="s2">&quot;-&quot;</span> <span class="o">+</span> <span class="n">all_files</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][:</span><span class="o">-</span><span class="mi">4</span><span class="p">]</span>
+
+    <span class="c1"># Check if csv file exists and if it should be rewritten</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="s2">&quot;offset_deltas&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">output_file_name</span><span class="si">}</span><span class="s2">.csv&quot;</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">rewrite</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span>
+                    <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">! ! ! CSV file with timestamps differences already &quot;</span>
+                    <span class="s2">&quot;exists and will be overwritten ! ! !</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="p">)</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">):</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">! ! ! Deleting the file in </span><span class="si">{</span><span class="mi">5</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">i</span><span class="si">}</span><span class="s2"> ! ! !</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+                    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">output_file_name</span><span class="si">}</span><span class="s2">.csv&quot;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span>
+                    <span class="s2">&quot;</span><span class="se">\n</span><span class="s2"> CSV file already exists, &#39;rewrite&#39; set to&quot;</span>
+                    <span class="s2">&quot; &#39;False&#39;, exiting.&quot;</span>
+                <span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="s2">&quot;..&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">FileNotFoundError</span><span class="p">:</span>
+        <span class="k">pass</span>
+
+    <span class="c1"># Collect the data for the required pixels</span>
+    <span class="nb">print</span><span class="p">(</span>
+        <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&gt; &gt; &gt; Collecting data for delta t plot for the requested &quot;</span>
+        <span class="s2">&quot;pixels and saving it to .csv in a cycle &lt; &lt; &lt;</span><span class="se">\n</span><span class="s2">&quot;</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">firmware_version</span> <span class="o">==</span> <span class="s2">&quot;2212s&quot;</span><span class="p">:</span>
+        <span class="n">pix_coordinates</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">256</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">64</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
+    <span class="k">elif</span> <span class="n">firmware_version</span> <span class="o">==</span> <span class="s2">&quot;2212b&quot;</span><span class="p">:</span>
+        <span class="n">pix_coordinates</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">256</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">64</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Firmware version is not recognized.&quot;</span><span class="p">)</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">()</span>
+
+    <span class="c1"># Mask the hot/warm pixels</span>
+    <span class="c1"># mask = utils.apply_mask(daughterboard_number, motherboard_number)</span>
+
+    <span class="c1"># Check if &#39;pixels&#39; is one or two peaks, swap their positions if</span>
+    <span class="c1"># needed</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">pixels</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="n">pixels_left</span> <span class="o">=</span> <span class="n">pixels</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">pixels_right</span> <span class="o">=</span> <span class="n">pixels</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="c1"># Check if pixels from the first list are to the left of the right</span>
+        <span class="c1"># (peaks are not mixed up)</span>
+        <span class="k">if</span> <span class="n">pixels_left</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">pixels_right</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+            <span class="n">pixels_left</span><span class="p">,</span> <span class="n">pixels_right</span> <span class="o">=</span> <span class="n">pixels_right</span><span class="p">,</span> <span class="n">pixels_left</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">pixels</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="n">pixels_left</span> <span class="o">=</span> <span class="n">pixels</span>
+        <span class="n">pixels_right</span> <span class="o">=</span> <span class="n">pixels</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">ceil</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">all_files</span><span class="p">))),</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Collecting data&quot;</span><span class="p">):</span>
+        <span class="n">file</span> <span class="o">=</span> <span class="n">all_files</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+
+        <span class="c1"># Prepare a dictionary for output</span>
+        <span class="n">deltas_all</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="c1"># Unpack data for the requested pixels into dictionary</span>
+        <span class="n">data_all</span> <span class="o">=</span> <span class="n">unpack_data_for_offset_calibration</span><span class="p">(</span>
+            <span class="n">file</span><span class="p">,</span>
+            <span class="n">daughterboard_number</span><span class="p">,</span>
+            <span class="n">motherboard_number</span><span class="p">,</span>
+            <span class="n">firmware_version</span><span class="p">,</span>
+            <span class="n">timestamps</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Calculate and collect timestamp differences</span>
+        <span class="k">for</span> <span class="n">q</span> <span class="ow">in</span> <span class="n">pixels_left</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">pixels_right</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">w</span> <span class="o">&lt;=</span> <span class="n">q</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="n">deltas_all</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">q</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="n">w</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="c1"># Find end of cycles</span>
+                <span class="n">cycler</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argwhere</span><span class="p">(</span><span class="n">data_all</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="o">-</span><span class="mi">2</span><span class="p">)</span>
+                <span class="n">cycler</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">cycler</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+                <span class="c1"># First pixel in the pair</span>
+                <span class="n">tdc1</span><span class="p">,</span> <span class="n">pix_c1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argwhere</span><span class="p">(</span><span class="n">pix_coordinates</span> <span class="o">==</span> <span class="n">q</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">pix1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">data_all</span><span class="p">[</span><span class="n">tdc1</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">pix_c1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="c1"># Second pixel in the pair</span>
+                <span class="n">tdc2</span><span class="p">,</span> <span class="n">pix_c2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argwhere</span><span class="p">(</span><span class="n">pix_coordinates</span> <span class="o">==</span> <span class="n">w</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">pix2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">data_all</span><span class="p">[</span><span class="n">tdc2</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">pix_c2</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="c1"># Get timestamp for both pixels in the given cycle</span>
+                <span class="k">for</span> <span class="n">cyc</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">cycler</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+                    <span class="n">pix1_</span> <span class="o">=</span> <span class="n">pix1</span><span class="p">[</span>
+                        <span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span>
+                            <span class="n">pix1</span> <span class="o">&gt;</span> <span class="n">cycler</span><span class="p">[</span><span class="n">cyc</span><span class="p">],</span> <span class="n">pix1</span> <span class="o">&lt;</span> <span class="n">cycler</span><span class="p">[</span><span class="n">cyc</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+                        <span class="p">)</span>
+                    <span class="p">]</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">pix1_</span><span class="p">):</span>
+                        <span class="k">continue</span>
+                    <span class="n">pix2_</span> <span class="o">=</span> <span class="n">pix2</span><span class="p">[</span>
+                        <span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span>
+                            <span class="n">pix2</span> <span class="o">&gt;</span> <span class="n">cycler</span><span class="p">[</span><span class="n">cyc</span><span class="p">],</span> <span class="n">pix2</span> <span class="o">&lt;</span> <span class="n">cycler</span><span class="p">[</span><span class="n">cyc</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+                        <span class="p">)</span>
+                    <span class="p">]</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">pix2_</span><span class="p">):</span>
+                        <span class="k">continue</span>
+                    <span class="c1"># Calculate delta t</span>
+                    <span class="n">tmsp1</span> <span class="o">=</span> <span class="n">data_all</span><span class="p">[</span><span class="n">tdc1</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span>
+                        <span class="n">pix1_</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">data_all</span><span class="p">[</span><span class="n">tdc1</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="n">pix1_</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)[</span><span class="mi">0</span><span class="p">]]</span>
+                    <span class="p">]</span>
+                    <span class="n">tmsp2</span> <span class="o">=</span> <span class="n">data_all</span><span class="p">[</span><span class="n">tdc2</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span>
+                        <span class="n">pix2_</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">data_all</span><span class="p">[</span><span class="n">tdc2</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="n">pix2_</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)[</span><span class="mi">0</span><span class="p">]]</span>
+                    <span class="p">]</span>
+                    <span class="k">for</span> <span class="n">t1</span> <span class="ow">in</span> <span class="n">tmsp1</span><span class="p">:</span>
+                        <span class="n">deltas</span> <span class="o">=</span> <span class="n">tmsp2</span> <span class="o">-</span> <span class="n">t1</span>
+                        <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">deltas</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">delta_window</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+                        <span class="n">deltas_all</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">q</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="n">w</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">deltas</span><span class="p">[</span><span class="n">ind</span><span class="p">])</span>
+
+        <span class="c1"># Save data as a .csv file in a cycle so data is not lost</span>
+        <span class="c1"># in the case of a failure close to the end</span>
+        <span class="n">data_for_plot_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">deltas_all</span><span class="p">,</span> <span class="n">orient</span><span class="o">=</span><span class="s2">&quot;index&quot;</span><span class="p">)</span>
+        <span class="k">del</span> <span class="n">deltas_all</span>
+        <span class="n">data_for_plot_df</span> <span class="o">=</span> <span class="n">data_for_plot_df</span><span class="o">.</span><span class="n">T</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="s2">&quot;offset_deltas&quot;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">FileNotFoundError</span><span class="p">:</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="s2">&quot;offset_deltas&quot;</span><span class="p">)</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="s2">&quot;offset_deltas&quot;</span><span class="p">)</span>
+        <span class="n">csv_file</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;*</span><span class="si">{</span><span class="n">output_file_name</span><span class="si">}</span><span class="s2">.csv*&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">csv_file</span><span class="p">:</span>
+            <span class="n">data_for_plot_df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Offset_</span><span class="si">{</span><span class="n">output_file_name</span><span class="si">}</span><span class="s2">.csv&quot;</span><span class="p">,</span>
+                <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;a&quot;</span><span class="p">,</span>
+                <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                <span class="n">header</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">data_for_plot_df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Offset_</span><span class="si">{</span><span class="n">output_file_name</span><span class="si">}</span><span class="s2">.csv&quot;</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span>
+            <span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="s2">&quot;..&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">path</span> <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;/offset_deltas/</span><span class="si">{</span><span class="n">output_file_name</span><span class="si">}</span><span class="s2">.csv&quot;</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span>
+            <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&gt; &gt; &gt; Timestamp differences are saved as&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">output_file_name</span><span class="si">}</span><span class="s2">.csv in &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;offset_deltas&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2"> &lt; &lt; &lt;&quot;</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;File wasn&#39;t generated. Check input parameters.&quot;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="calculate_and_save_offset_calibration">
+<a class="viewcode-back" href="../../../daplis.functions.calibrate.html#daplis.functions.calibrate.calculate_and_save_offset_calibration">[docs]</a>
+<span class="k">def</span> <span class="nf">calculate_and_save_offset_calibration</span><span class="p">(</span>
+    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">daughterboard_number</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">motherboard_number</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">firmware_version</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">timestamps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Calculate offset calibration and save as .npy.</span>
+
+<span class="sd">    Calculate offset calibration for all 256 pixels for the given</span>
+<span class="sd">    motherboard-daughterboard and firmware version.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    path : str</span>
+<span class="sd">        Path to the folder with the &#39;.dat&#39; data files.</span>
+<span class="sd">    daughterboard_number : str</span>
+<span class="sd">        LinoSPAD2 daughterboard number.</span>
+<span class="sd">    motherboard_number : str</span>
+<span class="sd">        LinoSPAD2 motherboard (FPGA) number, including the &quot;#&quot;.</span>
+<span class="sd">    firmware_version : str</span>
+<span class="sd">        LinoSPAD2 firmware version.</span>
+<span class="sd">    timestamps : int, optional</span>
+<span class="sd">        Number of timestamps per cycle per TDC. The default 1000.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">gauss</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">x0</span><span class="p">,</span> <span class="n">sigma</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">A</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="p">((</span><span class="n">x</span> <span class="o">-</span> <span class="n">x0</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">sigma</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span>
+
+    <span class="c1"># Calculate delta ts for pixels 0 and 4-255</span>
+    <span class="n">save_offset_timestamp_differences</span><span class="p">(</span>
+        <span class="n">path</span><span class="p">,</span>
+        <span class="n">pixels</span><span class="o">=</span><span class="p">[[</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">256</span><span class="p">)]],</span>
+        <span class="n">rewrite</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">daughterboard_number</span><span class="o">=</span><span class="n">daughterboard_number</span><span class="p">,</span>
+        <span class="n">motherboard_number</span><span class="o">=</span><span class="n">motherboard_number</span><span class="p">,</span>
+        <span class="n">firmware_version</span><span class="o">=</span><span class="n">firmware_version</span><span class="p">,</span>
+        <span class="n">timestamps</span><span class="o">=</span><span class="n">timestamps</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">path</span> <span class="o">+</span> <span class="sa">r</span><span class="s2">&quot;/offset_deltas/&quot;</span><span class="p">)</span>
+    <span class="n">file_csv</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s2">&quot;*Offset_*.csv*&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">dt_all</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">file_csv</span><span class="p">))</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="s2">&quot;..&quot;</span><span class="p">)</span>
+
+    <span class="n">peak_positions_3_256</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">256</span><span class="p">)</span>
+    <span class="n">peak_positions_1_4</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">256</span><span class="p">)</span>
+
+    <span class="c1"># Fit to find where the peak ends up.</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">255</span><span class="p">):</span>
+        <span class="n">dt_nonan_arr</span> <span class="o">=</span> <span class="n">dt_all</span><span class="p">[:,</span> <span class="n">i</span><span class="p">][</span><span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">dt_all</span><span class="p">[:,</span> <span class="n">i</span><span class="p">])]</span>
+        <span class="k">if</span> <span class="n">dt_nonan_arr</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">bins</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">dt_nonan_arr</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">dt_nonan_arr</span><span class="p">),</span> <span class="mi">2500</span> <span class="o">/</span> <span class="mi">140</span>
+            <span class="p">)</span>
+
+            <span class="n">counts</span><span class="p">,</span> <span class="n">bin_edges</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">histogram</span><span class="p">(</span><span class="n">dt_nonan_arr</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="n">bins</span><span class="p">)</span>
+            <span class="n">bin_centers</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">bin_edges</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">+</span> <span class="n">bin_edges</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+
+            <span class="n">n_max</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">counts</span><span class="p">)</span>
+            <span class="n">arg_max</span> <span class="o">=</span> <span class="p">(</span><span class="n">bin_edges</span><span class="p">[</span><span class="n">n_max</span><span class="p">]</span> <span class="o">+</span> <span class="n">bin_edges</span><span class="p">[</span><span class="n">n_max</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span> <span class="o">/</span> <span class="mi">2</span>
+            <span class="n">sigma</span> <span class="o">=</span> <span class="mi">200</span>
+
+            <span class="n">parameters</span><span class="p">,</span> <span class="n">covariance</span> <span class="o">=</span> <span class="n">curve_fit</span><span class="p">(</span>
+                <span class="n">gauss</span><span class="p">,</span> <span class="n">bin_centers</span><span class="p">,</span> <span class="n">counts</span><span class="p">,</span> <span class="n">p0</span><span class="o">=</span><span class="p">[</span><span class="nb">max</span><span class="p">(</span><span class="n">counts</span><span class="p">),</span> <span class="n">arg_max</span><span class="p">,</span> <span class="n">sigma</span><span class="p">]</span>
+            <span class="p">)</span>
+
+            <span class="n">peak_positions_3_256</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">parameters</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">peak_positions_3_256</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="c1"># Calculate delta ts for pixels 1,2,3</span>
+    <span class="n">save_offset_timestamp_differences</span><span class="p">(</span>
+        <span class="n">path</span><span class="p">,</span>
+        <span class="n">pixels</span><span class="o">=</span><span class="p">[[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="p">[</span><span class="mi">4</span><span class="p">]],</span>
+        <span class="n">rewrite</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">daughterboard_number</span><span class="o">=</span><span class="n">daughterboard_number</span><span class="p">,</span>
+        <span class="n">motherboard_number</span><span class="o">=</span><span class="n">motherboard_number</span><span class="p">,</span>
+        <span class="n">firmware_version</span><span class="o">=</span><span class="n">firmware_version</span><span class="p">,</span>
+        <span class="n">timestamps</span><span class="o">=</span><span class="n">timestamps</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">path</span> <span class="o">+</span> <span class="sa">r</span><span class="s2">&quot;/offset_deltas/&quot;</span><span class="p">)</span>
+    <span class="n">file_csv</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s2">&quot;*.csv*&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">dt_all</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">file_csv</span><span class="p">))</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="s2">&quot;..&quot;</span><span class="p">)</span>
+
+    <span class="n">peak_positions_1_4</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">256</span><span class="p">)</span>
+
+    <span class="c1"># Fit to find where the peak ends up.</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">):</span>
+        <span class="n">dt_nonan_arr</span> <span class="o">=</span> <span class="n">dt_all</span><span class="p">[:,</span> <span class="n">i</span><span class="p">][</span><span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">dt_all</span><span class="p">[:,</span> <span class="n">i</span><span class="p">])]</span>
+        <span class="k">if</span> <span class="n">dt_nonan_arr</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">bins</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">dt_nonan_arr</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">dt_nonan_arr</span><span class="p">),</span> <span class="mi">2500</span> <span class="o">/</span> <span class="mi">140</span>
+            <span class="p">)</span>
+
+            <span class="n">counts</span><span class="p">,</span> <span class="n">bin_edges</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">histogram</span><span class="p">(</span><span class="n">dt_nonan_arr</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="n">bins</span><span class="p">)</span>
+            <span class="n">bin_centers</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">bin_edges</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">+</span> <span class="n">bin_edges</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+
+            <span class="n">n_max</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">counts</span><span class="p">)</span>
+            <span class="n">arg_max</span> <span class="o">=</span> <span class="p">(</span><span class="n">bin_edges</span><span class="p">[</span><span class="n">n_max</span><span class="p">]</span> <span class="o">+</span> <span class="n">bin_edges</span><span class="p">[</span><span class="n">n_max</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span> <span class="o">/</span> <span class="mi">2</span>
+            <span class="n">sigma</span> <span class="o">=</span> <span class="mi">200</span>
+
+            <span class="n">parameters</span><span class="p">,</span> <span class="n">covariance</span> <span class="o">=</span> <span class="n">curve_fit</span><span class="p">(</span>
+                <span class="n">gauss</span><span class="p">,</span> <span class="n">bin_centers</span><span class="p">,</span> <span class="n">counts</span><span class="p">,</span> <span class="n">p0</span><span class="o">=</span><span class="p">[</span><span class="nb">max</span><span class="p">(</span><span class="n">counts</span><span class="p">),</span> <span class="n">arg_max</span><span class="p">,</span> <span class="n">sigma</span><span class="p">]</span>
+            <span class="p">)</span>
+
+            <span class="n">peak_positions_1_4</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">parameters</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="n">peak_positions</span> <span class="o">=</span> <span class="n">peak_positions_1_4</span> <span class="o">+</span> <span class="n">peak_positions_3_256</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">peak_positions</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">peak_positions</span><span class="p">)</span>
+
+    <span class="c1"># Indices for a system of linear equations for offset calculation.</span>
+    <span class="c1"># Last equation is for setting the average offset equal to zero.</span>
+    <span class="n">a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">256</span><span class="p">,</span> <span class="mi">256</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">255</span><span class="p">):</span>
+        <span class="n">a</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">a</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="n">a</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">a</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">a</span><span class="p">[</span><span class="mi">2</span><span class="p">][</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">a</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">4</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="n">a</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">4</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="n">a</span><span class="p">[</span><span class="mi">2</span><span class="p">][</span><span class="mi">4</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="n">a</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+
+    <span class="c1"># Solving the system of equations, the result are offsets</span>
+    <span class="n">offsets</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">peak_positions</span><span class="p">)</span>
+
+    <span class="n">np</span><span class="o">.</span><span class="n">save</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;Offset_</span><span class="si">{</span><span class="n">daughterboard_number</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">motherboard_number</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;_</span><span class="si">{</span><span class="n">firmware_version</span><span class="si">}</span><span class="s2">.npy&quot;</span><span class="p">,</span>
+        <span class="n">offsets</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="load_calibration_data">
+<a class="viewcode-back" href="../../../daplis.functions.calibrate.html#daplis.functions.calibrate.load_calibration_data">[docs]</a>
+<span class="k">def</span> <span class="nf">load_calibration_data</span><span class="p">(</span>
+    <span class="n">calibration_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">daughterboard_number</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">motherboard_number</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">firmware_version</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">include_offset</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Load the calibration data.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    calibration_path : str</span>
+<span class="sd">        Path to the &#39;.csv&#39; file with the calibration matrix.</span>
+<span class="sd">    daughterboard_number: str</span>
+<span class="sd">        The LinoSPAD2 daughterboard number.</span>
+<span class="sd">    motherboard_number : str</span>
+<span class="sd">        LinoSPAD2 motherboard (FPGA) number, including the &quot;#&quot;.</span>
+<span class="sd">    firmware_version: str</span>
+<span class="sd">        LinoSPAD2 firmware version.</span>
+<span class="sd">    include_offset : bool, optional</span>
+<span class="sd">        Switch for including the offset calibration. The default is</span>
+<span class="sd">        True.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    data_matrix : numpy.ndarray</span>
+<span class="sd">        256x140 matrix containing the calibrated data.</span>
+<span class="sd">    offset_arr : numpy.ndarray, optional</span>
+<span class="sd">        Array of 256 offset values, one for each pixel. Returned only if</span>
+<span class="sd">        include_offset is True.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">path_to_backup</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">()</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">calibration_path</span><span class="p">)</span>
+
+    <span class="c1"># Compensating for TDC nonlinearities</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">file_TDC</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;*TDC_</span><span class="si">{</span><span class="n">daughterboard_number</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">motherboard_number</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;_</span><span class="si">{</span><span class="n">firmware_version</span><span class="si">}</span><span class="s2">*&quot;</span>
+        <span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">except</span> <span class="ne">IndexError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;TDC calibration for </span><span class="si">{</span><span class="n">daughterboard_number</span><span class="si">}</span><span class="s2">, &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">motherboard_number</span><span class="si">}</span><span class="s2">, and </span><span class="si">{</span><span class="n">firmware_version</span><span class="si">}</span><span class="s2"> is not found&quot;</span>
+        <span class="p">)</span> <span class="kn">from</span> <span class="nn">exc</span>
+
+    <span class="c1"># Compensating for offset</span>
+    <span class="k">if</span> <span class="n">include_offset</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">file_offset</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;*Offset_</span><span class="si">{</span><span class="n">daughterboard_number</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">motherboard_number</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;_</span><span class="si">{</span><span class="n">firmware_version</span><span class="si">}</span><span class="s2">*&quot;</span>
+            <span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span>
+                <span class="s2">&quot;No .npy file with offset calibration data was found&quot;</span>
+            <span class="p">)</span>
+        <span class="n">offset_arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">file_offset</span><span class="p">)</span>
+
+    <span class="c1"># Skipping the first row of TDC bins&#39; numbers</span>
+    <span class="n">data_matrix_TDC</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">genfromtxt</span><span class="p">(</span><span class="n">file_TDC</span><span class="p">,</span> <span class="n">delimiter</span><span class="o">=</span><span class="s2">&quot;,&quot;</span><span class="p">,</span> <span class="n">skip_header</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="c1"># Cut the first column which is pixel numbers</span>
+    <span class="n">data_matrix_TDC</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">data_matrix_TDC</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">path_to_backup</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="p">(</span><span class="n">data_matrix_TDC</span><span class="p">,</span> <span class="n">offset_arr</span><span class="p">)</span> <span class="k">if</span> <span class="n">include_offset</span> <span class="k">else</span> <span class="n">data_matrix_TDC</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Sergei Kulkov.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

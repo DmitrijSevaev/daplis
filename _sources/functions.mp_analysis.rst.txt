@@ -1,0 +1,7 @@
+functions.mp\_analysis module
+=============================
+
+.. automodule:: functions.mp_analysis
+   :members:
+   :undoc-members:
+   :show-inheritance:

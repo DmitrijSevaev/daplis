@@ -1,0 +1,373 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>daplis.functions.sensor_plot module &mdash; Data Analysis Package for LinoSPAD2 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=8d563738"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="daplis.functions.unpack module" href="daplis.functions.unpack.html" />
+    <link rel="prev" title="daplis.functions.fits module" href="daplis.functions.fits.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Data Analysis Package for LinoSPAD2
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation and dependencies</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="daplis.html">daplis functions</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="daplis.functions.calc_diff.html">daplis.functions.calc_diff module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="daplis.functions.calibrate.html">daplis.functions.calibrate module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="daplis.functions.cross_talk.html">daplis.functions.cross_talk module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="daplis.functions.delta_t.html">daplis.functions.delta_t module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="daplis.functions.fits.html">daplis.functions.fits module</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">daplis.functions.sensor_plot module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#daplis.functions.sensor_plot.collect_data_and_apply_mask"><code class="docutils literal notranslate"><span class="pre">collect_data_and_apply_mask()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#daplis.functions.sensor_plot.plot_sensor_population"><code class="docutils literal notranslate"><span class="pre">plot_sensor_population()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#daplis.functions.sensor_plot.plot_sensor_population_full_sensor"><code class="docutils literal notranslate"><span class="pre">plot_sensor_population_full_sensor()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#daplis.functions.sensor_plot.plot_single_pix_hist"><code class="docutils literal notranslate"><span class="pre">plot_single_pix_hist()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#daplis.functions.sensor_plot.unpickle_plot"><code class="docutils literal notranslate"><span class="pre">unpickle_plot()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="daplis.functions.unpack.html">daplis.functions.unpack module</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="contribute.html">How to contribute</a></li>
+<li class="toctree-l1"><a class="reference internal" href="license.html">License and contact info</a></li>
+<li class="toctree-l1"><a class="reference internal" href="acknowledgement.html">Acknowledgement</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Data Analysis Package for LinoSPAD2</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="daplis.html">daplis functions</a></li>
+      <li class="breadcrumb-item active">daplis.functions.sensor_plot module</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/daplis.functions.plot_tmsp.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-daplis.functions.sensor_plot">
+<span id="daplis-functions-sensor-plot-module"></span><h1>daplis.functions.sensor_plot module<a class="headerlink" href="#module-daplis.functions.sensor_plot" title="Link to this heading"></a></h1>
+<p>Module with scripts for plotting the LinoSPAD2 sensor population.</p>
+<p>This script utilizes an unpacking module used specifically for the
+LinoSPAD2 data output.</p>
+<p>This file can also be imported as a module and contains the following
+functions:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>collect_data_and_apply_mask - Collect data from files and apply</p></li>
+</ul>
+<p>mask to the valid pixel count.</p>
+<ul class="simple">
+<li><p>plot_single_pix_hist - Plot a histogram for each pixel in the given</p></li>
+</ul>
+<p>range.</p>
+<ul class="simple">
+<li><p>plot_sensor_population - Plot number of timestamps in each pixel</p></li>
+</ul>
+<p>for all data files.</p>
+<ul class="simple">
+<li><p>plot_sensor_population_spdc - Plot sensor population for SPDC data.</p></li>
+<li><p>plot_sensor_population_full_sensor - Plot the number of timestamps</p></li>
+</ul>
+<p>in each pixel for all data files from two different FPGAs/sensor
+halves.</p>
+</div></blockquote>
+<dl class="py function">
+<dt class="sig sig-object py" id="daplis.functions.sensor_plot.collect_data_and_apply_mask">
+<span class="sig-prename descclassname"><span class="pre">daplis.functions.sensor_plot.</span></span><span class="sig-name descname"><span class="pre">collect_data_and_apply_mask</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">files</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">daughterboard_number</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">motherboard_number</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">firmware_version</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timestamps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">app_mask</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">absolute_timestamps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_to_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">correct_pix_address</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">calculate_rates</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="_modules/daplis/functions/sensor_plot.html#collect_data_and_apply_mask"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#daplis.functions.sensor_plot.collect_data_and_apply_mask" title="Link to this definition"></a></dt>
+<dd><p>Collect data from files and apply mask to the valid pixel count.</p>
+<p>Unpacks data and returns the number of timestamps in each pixel.
+This function introduces modularity to the whole module and is
+called multiple times here.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>files</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>) – List of data file paths.</p></li>
+<li><p><strong>daughterboard_number</strong> (<em>str</em>) – The LinoSPAD2 daughterboard number.</p></li>
+<li><p><strong>motherboard_number</strong> (<em>str</em>) – The LinoSPAD2 motherboard number, including the “#”.</p></li>
+<li><p><strong>firmware_version</strong> (<em>str</em>) – LinoSPAD2 firmware version.</p></li>
+<li><p><strong>timestamps</strong> (<em>int</em>) – Number of timestamps per pixel per acquisition cycle.</p></li>
+<li><p><strong>app_mask</strong> (<em>bool</em><em>, </em><em>optional</em>) – Switch for applying the mask on warm/hot pixels. Default is True.</p></li>
+<li><p><strong>absolute_timestamps</strong> (<em>bool</em><em>, </em><em>optional</em>) – Indicator for data files with absolute timestamps. Default is
+False.</p></li>
+<li><p><strong>correct_pix_address</strong> (<em>bool</em><em>, </em><em>optional</em>) – Check for correcting the pixel addresing. THe default is False.</p></li>
+<li><p><strong>calculate_rates</strong> (<em>bool</em><em>, </em><em>optional</em>) – Switch for calculating the photon rate for each pixel. The
+default is ‘False’.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Array with the number of timestamps per pixel.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="daplis.functions.sensor_plot.plot_sensor_population">
+<span class="sig-prename descclassname"><span class="pre">daplis.functions.sensor_plot.</span></span><span class="sig-name descname"><span class="pre">plot_sensor_population</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">daughterboard_number</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">motherboard_number</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">firmware_version</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timestamps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">512</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'linear'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">style</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'-o'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_fig</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">app_mask</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'rebeccapurple'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">correct_pix_address</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_peaks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threshold_multiplier</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pickle_fig</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">absolute_timestamps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">single_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/daplis/functions/sensor_plot.html#plot_sensor_population"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#daplis.functions.sensor_plot.plot_sensor_population" title="Link to this definition"></a></dt>
+<dd><p>Plot number of timestamps in each pixel for all datafiles.</p>
+<p>Plot sensor population as number of timestamps vs. pixel number.
+Analyzes all data files in the given folder. The output figure is saved
+in the “results” folder, which is created if it does not exist, in
+the same folder where datafiles are. Works with the firmware version
+‘2212’.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path</strong> (<em>str</em>) – Path to the datafiles.</p></li>
+<li><p><strong>daughterboard_number</strong> (<em>str</em>) – The LinoSPAD2 daughterboard number. Required for choosing the
+correct calibration data.</p></li>
+<li><p><strong>motherboard_number</strong> (<em>str</em>) – The LinoSPAD2 motherboard number, including the “#”.</p></li>
+<li><p><strong>firmware_version</strong> (<em>str</em>) – LinoSPAD2 firmware version. Versions ‘2212b’ (block) or ‘2212s’
+(skip) are recognized.</p></li>
+<li><p><strong>timestamps</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of timestamps per pixel per acquisition cycle. Default is
+“512”.</p></li>
+<li><p><strong>scale</strong> (<em>str</em><em>, </em><em>optional</em>) – Scale for the y-axis of the plot. Use “log” for logarithmic.
+The default is “linear”.</p></li>
+<li><p><strong>style</strong> (<em>str</em><em>, </em><em>optional</em>) – Style of the plot. The default is “-o”.</p></li>
+<li><p><strong>show_fig</strong> (<em>bool</em><em>, </em><em>optional</em>) – Switch for showing the plot. The default is False.</p></li>
+<li><p><strong>app_mask</strong> (<em>bool</em><em>, </em><em>optional</em>) – Switch for applying the mask on warm/hot pixels. The default is
+True.</p></li>
+<li><p><strong>color</strong> (<em>str</em><em>, </em><em>optional</em>) – Color for the plot. The default is ‘rebeccapurple’.</p></li>
+<li><p><strong>correct_pix_address</strong> (<em>bool</em><em>, </em><em>optional</em>) – Switch for correcting pixel addressing for the faulty firmware
+version for the 23 side of the daughterboard. The default is
+False.</p></li>
+<li><p><strong>fit_peaks</strong> (<em>bool</em><em>, </em><em>optional</em>) – Switch for finding the highest peaks and fitting them with a
+Gaussian to provide their position. The default is False.</p></li>
+<li><p><strong>threshold_multiplier</strong> (<em>int</em><em>, </em><em>optional</em>) – Threshold multiplier that is applied to median across the whole
+sensor for finding peaks. The default is 10.</p></li>
+<li><p><strong>pickle_fig</strong> (<em>bool</em><em>, </em><em>optional</em>) – Switch for pickling the figure. Can be used when plotting takes
+a lot of time. The default is False.</p></li>
+<li><p><strong>absolute_timestamps</strong> (<em>bool</em><em>, </em><em>optional</em>) – Indicator for data files with absolute timestamps. Default is
+False.</p></li>
+<li><p><strong>single_file</strong> (<em>optional</em>) – Switch for using only the first file in the folder. Can be
+utilized for a quick plot. The default is False.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None.</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<p>An example how the function can be used to get the sensor
+occupation from a single file while looking for peaks - the most
+quick and straightforward approach to find where the beams were
+focused and get the peak position for further use in, e.g., delta_t
+functions. Here, the data were collected using the ‘23’-side
+sensor half which required correction of the pixel addressing.
+Offset calibration for the sensor is not available therefore
+it should be skipped.</p>
+<p>First, get the absolute path to where the ‘.dat’ files are.
+&gt;&gt;&gt; path = r’C:/Path/To/Data’</p>
+<p>Now to the function itself.
+&gt;&gt;&gt; plot_sensor_popuation(
+&gt;&gt;&gt; path,
+&gt;&gt;&gt; daughterboard_number=”NL11”,
+&gt;&gt;&gt; motherboard_number=”#21”,
+&gt;&gt;&gt; firmware_version=”2212s”,
+&gt;&gt;&gt; timestamps = 1000,
+&gt;&gt;&gt; show_fig = True,
+&gt;&gt;&gt; correct_pix_address = True,
+&gt;&gt;&gt; fit_peaks = True,
+&gt;&gt;&gt; single_file = True,
+&gt;&gt;&gt; )</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="daplis.functions.sensor_plot.plot_sensor_population_full_sensor">
+<span class="sig-prename descclassname"><span class="pre">daplis.functions.sensor_plot.</span></span><span class="sig-name descname"><span class="pre">plot_sensor_population_full_sensor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">daughterboard_number</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">motherboard_number1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">motherboard_number2</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">firmware_version</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timestamps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">512</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'linear'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">style</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'-o'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_fig</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">app_mask</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'salmon'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_peaks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threshold_multiplier</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pickle_fig</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">single_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">absolute_timestamps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/daplis/functions/sensor_plot.html#plot_sensor_population_full_sensor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#daplis.functions.sensor_plot.plot_sensor_population_full_sensor" title="Link to this definition"></a></dt>
+<dd><p>Plot the number of timestamps in each pixel for all datafiles.</p>
+<p>Plot sensor population as the number of timestamps vs. pixel number.
+Analyzes all data files in the given folder. The output figure is saved
+in the “results” folder, which is created if it does not exist, in
+the same folder where datafiles are. Works with the firmware version
+‘2212’.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path</strong> (<em>str</em>) – Path to the datafiles.</p></li>
+<li><p><strong>daughterboard_number</strong> (<em>str</em>) – The LinoSPAD2 daughterboard number. Required for choosing the
+correct calibration data.</p></li>
+<li><p><strong>motherboard_number1</strong> (<em>str</em>) – The LinoSPAD2 motherboard number for the first board.</p></li>
+<li><p><strong>motherboard_number2</strong> (<em>str</em>) – The LinoSPAD2 motherboard number for the second board.</p></li>
+<li><p><strong>firmware_version</strong> (<em>str</em>) – LinoSPAD2 firmware version. Versions ‘2212b’ (block) or ‘2212s’
+(skip) are recognized.</p></li>
+<li><p><strong>timestamps</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of timestamps per pixel per acquisition cycle. Default is
+“512”.</p></li>
+<li><p><strong>scale</strong> (<em>str</em><em>, </em><em>optional</em>) – Scale for the y-axis of the plot. Use “log” for logarithmic.
+The default is “linear”.</p></li>
+<li><p><strong>style</strong> (<em>str</em><em>, </em><em>optional</em>) – Style of the plot. The default is “-o”.</p></li>
+<li><p><strong>show_fig</strong> (<em>bool</em><em>, </em><em>optional</em>) – Switch for showing the plot. The default is False.</p></li>
+<li><p><strong>app_mask</strong> (<em>bool</em><em>, </em><em>optional</em>) – Switch for applying the mask on warm/hot pixels. The default is
+True.</p></li>
+<li><p><strong>color</strong> (<em>str</em><em>, </em><em>optional</em>) – Color for the plot. The default is ‘salmon’.</p></li>
+<li><p><strong>fit_peaks</strong> (<em>bool</em><em>, </em><em>optional</em>) – Switch for finding the highest peaks and fitting them with a
+Gaussian to provide their position. The default is False.</p></li>
+<li><p><strong>threshold_multiplier</strong> (<em>int</em><em>, </em><em>optional</em>) – Threshold multiplier for setting the threshold for finding peaks.
+The default is 10.</p></li>
+<li><p><strong>pickle_fig</strong> (<em>bool</em><em>, </em><em>optional</em>) – Switch for pickling the figure. Can be used when plotting takes
+a lot of time. The default is False.</p></li>
+<li><p><strong>single_file</strong> (<em>bool</em><em>, </em><em>optional</em>) – Switch for unpacking only the first file for a quick plot.
+The default is False.</p></li>
+<li><p><strong>absolute_timestamps</strong> (<em>bool</em><em>, </em><em>optional</em>) – Indicator for data files with absolute timestamps. Default is
+False.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None.</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>As the pixel addressing is incorrect for one of the sensor halves
+(depends on the daughterboard-motherboards combinatios; in NL11, for
+motherboard #21 pixel addressing should be applied), it is important
+to apply pixel addressing to the correct board/sensor half. For this
+function, the order in which the motherboards are input is key, as
+pixel addressing is corrected for the second board.</p>
+<p>TLDR: motherboard_number2 should be for the one where correction of
+the pixel addressing is required.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="daplis.functions.sensor_plot.plot_single_pix_hist">
+<span class="sig-prename descclassname"><span class="pre">daplis.functions.sensor_plot.</span></span><span class="sig-name descname"><span class="pre">plot_single_pix_hist</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pixels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">daughterboard_number</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">motherboard_number</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">firmware_version</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timestamps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">512</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cycle_length</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">4000000000.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">multiplier</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1000000.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_fig</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_average</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'teal'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/daplis/functions/sensor_plot.html#plot_single_pix_hist"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#daplis.functions.sensor_plot.plot_single_pix_hist" title="Link to this definition"></a></dt>
+<dd><p>Plot a histogram for each pixel in the given range.</p>
+<p>Used mainly for checking the homogeneity of the LinoSPAD2 output
+(mainly clock and acquisition window size settings).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path</strong> (<em>str</em>) – Path to data file.</p></li>
+<li><p><strong>pixels</strong> (<em>array-like</em><em>, </em><em>list</em>) – Array of pixels indices.</p></li>
+<li><p><strong>daughterboard_number</strong> (<em>str</em>) – LinoSPAD2 daughterboard number.</p></li>
+<li><p><strong>motherboard_number</strong> (<em>str</em>) – LinoSPAD2 motherboard (FPGA) number, including the ‘#’.</p></li>
+<li><p><strong>firmware_version</strong> (<em>str</em>) – LinoSPAD2 firmware version.</p></li>
+<li><p><strong>timestamps</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of timestamps per pixel per acquisition cycle. The
+default is 512.</p></li>
+<li><p><strong>cycle_length</strong> (<em>float</em><em>, </em><em>optional</em>) – Length of the data acquisition cycle. The default is 4e9, or 4 ms.</p></li>
+<li><p><strong>multiplier</strong> (<em>int</em><em>, </em><em>optional</em>) – Multiplier of 17.857 for the bin size of the histogram. The
+default is 1e6.</p></li>
+<li><p><strong>show_fig</strong> (<em>bool</em><em>, </em><em>optional</em>) – Switch for showing the output figure. The default is False.</p></li>
+<li><p><strong>fit_average</strong> (<em>int</em><em>, </em><em>optional</em>) – Switch for fitting averages of histogram counts in windows of
++/-10. The default is False.</p></li>
+<li><p><strong>color</strong> (<em>str</em><em>, </em><em>optional</em>) – Color of the histogram. The default is ‘teal’.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="daplis.functions.sensor_plot.unpickle_plot">
+<span class="sig-prename descclassname"><span class="pre">daplis.functions.sensor_plot.</span></span><span class="sig-name descname"><span class="pre">unpickle_plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">plot_pickle_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="_modules/daplis/functions/sensor_plot.html#unpickle_plot"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#daplis.functions.sensor_plot.unpickle_plot" title="Link to this definition"></a></dt>
+<dd><p>Unpickle a saved figure and return plot data.</p>
+<p>Load a pickled figure with the sensor population plot, extract and
+return the plot data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>plot_pickle_file</strong> (<em>str</em>) – The absolute path to the pickle file with the sensor population
+plot.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A tuple containing:
+- fig (matplotlib.figure.Figure): The unpickled figure object.
+- plot_data (dict): A dictionary with keys “Histogram” and
+“Fit_{i}” (for i &gt;= 1), where each value is a tuple of x and y
+data for the corresponding line plot.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>FileNotFoundError</strong> – If the specified pickle file does not exist, a FileNotFoundError
+    is raised and an error message is printed.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="daplis.functions.fits.html" class="btn btn-neutral float-left" title="daplis.functions.fits module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="daplis.functions.unpack.html" class="btn btn-neutral float-right" title="daplis.functions.unpack module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Sergei Kulkov.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

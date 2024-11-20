@@ -1,0 +1,369 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>daplis.functions.calc_diff &mdash; Data Analysis Package for LinoSPAD2 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=8d563738"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Data Analysis Package for LinoSPAD2
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation and dependencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../daplis.html">daplis functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contribute.html">How to contribute</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../license.html">License and contact info</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../acknowledgement.html">Acknowledgement</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Data Analysis Package for LinoSPAD2</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">daplis.functions.calc_diff</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for daplis.functions.calc_diff</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Module for computing timestamp differences.</span>
+
+<span class="sd">Compares all timestamps from the same cycle for the given pair of pixels</span>
+<span class="sd">against a given value (delta_window). Differences in that window are saved</span>
+<span class="sd">and returned as a list.</span>
+
+<span class="sd">This file can also be imported as a module and contains the following</span>
+<span class="sd">functions:</span>
+
+<span class="sd">    TODO remove</span>
+<span class="sd">    * calculate_differences_2212 - calculate timestamp differences for</span>
+<span class="sd">    the given pair of pixels. Works only with firmware version &#39;2212&#39;.</span>
+<span class="sd">    </span>
+<span class="sd">    * calculate_differences_2212_fast - calculate timestamp differences for</span>
+<span class="sd">    the given pair of pixels. Works only with firmware version &#39;2212&#39;.</span>
+<span class="sd">    Uses a faster algorithm than the function above.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span>
+<span class="kn">from</span> <span class="nn">warnings</span> <span class="kn">import</span> <span class="n">warn</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="n">ndarray</span>
+
+<span class="kn">from</span> <span class="nn">daplis.functions</span> <span class="kn">import</span> <span class="n">utils</span>
+
+
+<span class="c1"># TODO remove - deprecated</span>
+<div class="viewcode-block" id="calculate_differences_2212">
+<a class="viewcode-back" href="../../../daplis.functions.calc_diff.html#daplis.functions.calc_diff.calculate_differences_2212">[docs]</a>
+<span class="k">def</span> <span class="nf">calculate_differences_2212</span><span class="p">(</span>
+    <span class="n">data</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
+    <span class="n">pixels</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]],</span>
+    <span class="n">pix_coor</span><span class="p">,</span>
+    <span class="n">delta_window</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">50e3</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Calculate timestamp differences for firmware version 2212.</span>
+
+<span class="sd">    Calculate timestamp differences for the given pixels and LinoSPAD2</span>
+<span class="sd">    firmware version 2212.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    data : list of array-like</span>
+<span class="sd">        List of data arrays, each corresponding to a different TDC.</span>
+<span class="sd">    pixels : List[int] | List[List[int]]</span>
+<span class="sd">        List of pixel numbers for which the timestamp differences should</span>
+<span class="sd">        be calculated or list of two lists with pixel numbers for peak</span>
+<span class="sd">        vs. peak calculations.</span>
+<span class="sd">    pix_coor : array-like</span>
+<span class="sd">        Array for transforming the pixel address in terms of TDC (0 to 3)</span>
+<span class="sd">        to pixel number in terms of half of the sensor (0 to 255).</span>
+<span class="sd">    delta_window : float, optional</span>
+<span class="sd">        Width of the time window for counting timestamp differences.</span>
+<span class="sd">        The default is 50e3 (50 ns).</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    deltas_all : dict</span>
+<span class="sd">        Dictionary containing timestamp differences for each pair of pixels.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># TODO: remove</span>
+    <span class="n">warn</span><span class="p">(</span>
+        <span class="s2">&quot;This function is deprecated. Use&quot;</span> <span class="s2">&quot;&#39;calculate_differences_2212_fast&#39;&quot;</span><span class="p">,</span>
+        <span class="ne">DeprecationWarning</span><span class="p">,</span>
+        <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="c1"># Dictionary for the timestamp differences, where keys are the</span>
+    <span class="c1"># pixel numbers of the requested pairs</span>
+    <span class="n">deltas_all</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="n">pixels_left</span><span class="p">,</span> <span class="n">pixels_right</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">pixel_list_transform</span><span class="p">(</span><span class="n">pixels</span><span class="p">)</span>
+
+    <span class="c1"># Find ends of cycles</span>
+    <span class="n">cycle_ends</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argwhere</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="o">-</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">cycle_ends</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">cycle_ends</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">q</span> <span class="ow">in</span> <span class="n">pixels_left</span><span class="p">:</span>
+        <span class="c1"># First pixel in the pair</span>
+        <span class="n">tdc1</span><span class="p">,</span> <span class="n">pix_c1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argwhere</span><span class="p">(</span><span class="n">pix_coor</span> <span class="o">==</span> <span class="n">q</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">pix1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">tdc1</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">pix_c1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">pixels_right</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">w</span> <span class="o">&lt;=</span> <span class="n">q</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">deltas_all</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">q</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="n">w</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+            <span class="c1"># Second pixel in the pair</span>
+            <span class="n">tdc2</span><span class="p">,</span> <span class="n">pix_c2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argwhere</span><span class="p">(</span><span class="n">pix_coor</span> <span class="o">==</span> <span class="n">w</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">pix2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">tdc2</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">pix_c2</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+            <span class="c1"># Go over cycles, getting data for the appropriate cycle</span>
+            <span class="c1"># only</span>
+            <span class="k">for</span> <span class="n">cyc</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">cycle_ends</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+                <span class="n">slice_from</span> <span class="o">=</span> <span class="n">cycle_ends</span><span class="p">[</span><span class="n">cyc</span><span class="p">]</span>
+                <span class="n">slice_to</span> <span class="o">=</span> <span class="n">cycle_ends</span><span class="p">[</span><span class="n">cyc</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+                <span class="n">pix1_slice</span> <span class="o">=</span> <span class="n">pix1</span><span class="p">[(</span><span class="n">pix1</span> <span class="o">&gt;=</span> <span class="n">slice_from</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">pix1</span> <span class="o">&lt;</span> <span class="n">slice_to</span><span class="p">)]</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">pix1_slice</span><span class="p">):</span>
+                    <span class="k">continue</span>
+                <span class="n">pix2_slice</span> <span class="o">=</span> <span class="n">pix2</span><span class="p">[(</span><span class="n">pix2</span> <span class="o">&gt;=</span> <span class="n">slice_from</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">pix2</span> <span class="o">&lt;</span> <span class="n">slice_to</span><span class="p">)]</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">pix2_slice</span><span class="p">):</span>
+                    <span class="k">continue</span>
+
+                <span class="c1"># Calculate delta t</span>
+                <span class="n">tmsp1</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">tdc1</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="n">pix1_slice</span><span class="p">]</span>
+                <span class="n">tmsp1</span> <span class="o">=</span> <span class="n">tmsp1</span><span class="p">[</span><span class="n">tmsp1</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">]</span>
+                <span class="n">tmsp2</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">tdc2</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="n">pix2_slice</span><span class="p">]</span>
+                <span class="n">tmsp2</span> <span class="o">=</span> <span class="n">tmsp2</span><span class="p">[</span><span class="n">tmsp2</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">]</span>
+                <span class="k">for</span> <span class="n">t1</span> <span class="ow">in</span> <span class="n">tmsp1</span><span class="p">:</span>
+                    <span class="n">deltas</span> <span class="o">=</span> <span class="n">tmsp2</span> <span class="o">-</span> <span class="n">t1</span>
+                    <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">deltas</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">delta_window</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+                    <span class="n">deltas_all</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">q</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="n">w</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">deltas</span><span class="p">[</span><span class="n">ind</span><span class="p">])</span>
+
+    <span class="k">return</span> <span class="n">deltas_all</span></div>
+
+
+
+<div class="viewcode-block" id="calculate_differences_2212_fast">
+<a class="viewcode-back" href="../../../daplis.functions.calc_diff.html#daplis.functions.calc_diff.calculate_differences_2212_fast">[docs]</a>
+<span class="k">def</span> <span class="nf">calculate_differences_2212_fast</span><span class="p">(</span>
+    <span class="n">data</span><span class="p">:</span> <span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">pixels</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]],</span>
+    <span class="n">pix_coor</span><span class="p">:</span> <span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">delta_window</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">50e3</span><span class="p">,</span>
+    <span class="n">cycle_length</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">4e9</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Calculate timestamp differences for firmware version 2212.</span>
+
+<span class="sd">    Calculate timestamp differences for the given pixels and LinoSPAD2</span>
+<span class="sd">    firmware version 2212.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    data : ndarray</span>
+<span class="sd">        Matrix of timestamps, where rows correspond to the TDCs.</span>
+<span class="sd">    pixels : List[int] | List[List[int]]</span>
+<span class="sd">        List of pixel numbers for which the timestamp differences should</span>
+<span class="sd">        be calculated or list of two lists with pixel numbers for peak</span>
+<span class="sd">        vs. peak calculations.</span>
+<span class="sd">    pix_coor : ndarray</span>
+<span class="sd">        Array for transforming the pixel address in terms of TDC (0 to 3)</span>
+<span class="sd">        to pixel number in terms of half of the sensor (0 to 255).</span>
+<span class="sd">    delta_window : float, optional</span>
+<span class="sd">        Width of the time window for counting timestamp differences.</span>
+<span class="sd">        The default is 50e3 (50 ns).</span>
+<span class="sd">    cycle_length : float, optional</span>
+<span class="sd">        Length of each acquisition cycle. The default is 4e9 (4 ms).</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    deltas_all : dict</span>
+<span class="sd">        Dictionary containing timestamp differences for each pair of pixels.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Dictionary for the timestamp differences, where keys are the</span>
+    <span class="c1"># pixel numbers of the requested pairs</span>
+    <span class="n">deltas_all</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="n">pixels_left</span><span class="p">,</span> <span class="n">pixels_right</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">pixel_list_transform</span><span class="p">(</span><span class="n">pixels</span><span class="p">)</span>
+
+    <span class="c1"># Find ends of cycles</span>
+    <span class="n">cycle_ends</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argwhere</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="o">-</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">cycle_ends</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">cycle_ends</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">q</span> <span class="ow">in</span> <span class="n">pixels_left</span><span class="p">:</span>
+        <span class="c1"># First pixel in the pair</span>
+        <span class="n">tdc1</span><span class="p">,</span> <span class="n">pix_c1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argwhere</span><span class="p">(</span><span class="n">pix_coor</span> <span class="o">==</span> <span class="n">q</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">pix1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">tdc1</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">pix_c1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">pixels_right</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">w</span> <span class="o">&lt;=</span> <span class="n">q</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">deltas_all</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">q</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="n">w</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+            <span class="n">timestamps_1</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">timestamps_2</span> <span class="o">=</span> <span class="p">[]</span>
+
+            <span class="c1"># Second pixel in the pair</span>
+            <span class="n">tdc2</span><span class="p">,</span> <span class="n">pix_c2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argwhere</span><span class="p">(</span><span class="n">pix_coor</span> <span class="o">==</span> <span class="n">w</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">pix2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">tdc2</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">pix_c2</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+            <span class="c1"># Go over cycles, shifting the timestamps from each next</span>
+            <span class="c1"># cycle by lengths of cycles before (e.g., for the 4th cycle</span>
+            <span class="c1"># add 12 ms)</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">cycle_ends</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]):</span>
+                <span class="n">slice_from</span> <span class="o">=</span> <span class="n">cycle_ends</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                <span class="n">slice_to</span> <span class="o">=</span> <span class="n">cycle_ends</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+                <span class="n">pix1_slice</span> <span class="o">=</span> <span class="n">pix1</span><span class="p">[(</span><span class="n">pix1</span> <span class="o">&gt;=</span> <span class="n">slice_from</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">pix1</span> <span class="o">&lt;</span> <span class="n">slice_to</span><span class="p">)]</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">pix1_slice</span><span class="p">):</span>
+                    <span class="k">continue</span>
+                <span class="n">pix2_slice</span> <span class="o">=</span> <span class="n">pix2</span><span class="p">[(</span><span class="n">pix2</span> <span class="o">&gt;=</span> <span class="n">slice_from</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">pix2</span> <span class="o">&lt;</span> <span class="n">slice_to</span><span class="p">)]</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">pix2_slice</span><span class="p">):</span>
+                    <span class="k">continue</span>
+
+                <span class="c1"># Shift timestamps by cycle length</span>
+                <span class="n">tmsp1</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">tdc1</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="n">pix1_slice</span><span class="p">]</span>
+                <span class="n">tmsp1</span> <span class="o">=</span> <span class="n">tmsp1</span><span class="p">[</span><span class="n">tmsp1</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">]</span>
+                <span class="n">tmsp1</span> <span class="o">=</span> <span class="n">tmsp1</span> <span class="o">+</span> <span class="n">cycle_length</span> <span class="o">*</span> <span class="n">i</span>
+
+                <span class="n">tmsp2</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">tdc2</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="n">pix2_slice</span><span class="p">]</span>
+                <span class="n">tmsp2</span> <span class="o">=</span> <span class="n">tmsp2</span><span class="p">[</span><span class="n">tmsp2</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">]</span>
+                <span class="n">tmsp2</span> <span class="o">=</span> <span class="n">tmsp2</span> <span class="o">+</span> <span class="n">cycle_length</span> <span class="o">*</span> <span class="n">i</span>
+
+                <span class="n">timestamps_1</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">tmsp1</span><span class="p">)</span>
+                <span class="n">timestamps_2</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">tmsp2</span><span class="p">)</span>
+
+            <span class="n">timestamps_1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">timestamps_1</span><span class="p">)</span>
+            <span class="n">timestamps_2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">timestamps_2</span><span class="p">)</span>
+
+            <span class="c1"># Indicators for each pixel: 0 for timestamps from one pixel</span>
+            <span class="c1"># 1 - from the other</span>
+            <span class="n">pix1_ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">timestamps_1</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
+            <span class="n">pix2_ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">timestamps_2</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
+
+            <span class="n">pix1_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">((</span><span class="n">pix1_ind</span><span class="p">,</span> <span class="n">timestamps_1</span><span class="p">))</span>
+            <span class="n">pix2_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">((</span><span class="n">pix2_ind</span><span class="p">,</span> <span class="n">timestamps_2</span><span class="p">))</span>
+
+            <span class="c1"># Dataframe for each pixel with pixel indicator and</span>
+            <span class="c1"># timestamps</span>
+            <span class="n">df1</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+                <span class="n">pix1_data</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Pixel_index&quot;</span><span class="p">,</span> <span class="s2">&quot;Timestamp&quot;</span><span class="p">]</span>
+            <span class="p">)</span>
+            <span class="n">df2</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+                <span class="n">pix2_data</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Pixel_index&quot;</span><span class="p">,</span> <span class="s2">&quot;Timestamp&quot;</span><span class="p">]</span>
+            <span class="p">)</span>
+
+            <span class="c1"># Combine the two dataframes</span>
+            <span class="n">df_combined</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">((</span><span class="n">df1</span><span class="p">,</span> <span class="n">df2</span><span class="p">),</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+            <span class="c1"># Sort the timestamps</span>
+            <span class="n">df_combined</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="s2">&quot;Timestamp&quot;</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+            <span class="c1"># Subtract pixel indicators of neighbors; values of 0</span>
+            <span class="c1"># correspond to timestamp differences for the same pixel</span>
+            <span class="c1"># &#39;-1&#39; and &#39;1&#39; - to differences from different pixels</span>
+            <span class="n">df_combined</span><span class="p">[</span><span class="s2">&quot;Pixel_index_diff&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df_combined</span><span class="p">[</span><span class="s2">&quot;Pixel_index&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">diff</span><span class="p">()</span>
+
+            <span class="c1"># Calculate timestamp difference between neighbors</span>
+            <span class="n">df_combined</span><span class="p">[</span><span class="s2">&quot;Timestamp_diff&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df_combined</span><span class="p">[</span><span class="s2">&quot;Timestamp&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">diff</span><span class="p">()</span>
+
+            <span class="c1"># Get the correct timestamp difference sign</span>
+            <span class="n">df_combined</span><span class="p">[</span><span class="s2">&quot;Timestamp_diff&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">df_combined</span><span class="p">[</span><span class="s2">&quot;Timestamp_diff&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="n">df_combined</span><span class="p">[</span><span class="s2">&quot;Pixel_index_diff&quot;</span><span class="p">]</span>
+            <span class="p">)</span>
+
+            <span class="c1"># Collect timestamp differences where timestamps are from</span>
+            <span class="c1"># different pixels</span>
+            <span class="n">filtered_df</span> <span class="o">=</span> <span class="n">df_combined</span><span class="p">[</span>
+                <span class="nb">abs</span><span class="p">(</span><span class="n">df_combined</span><span class="p">[</span><span class="s2">&quot;Pixel_index_diff&quot;</span><span class="p">])</span> <span class="o">==</span> <span class="mi">1</span>
+            <span class="p">]</span>
+
+            <span class="c1"># Save only timestamps differences in the requested window</span>
+            <span class="n">delta_ts</span> <span class="o">=</span> <span class="n">filtered_df</span><span class="p">[</span>
+                <span class="nb">abs</span><span class="p">(</span><span class="n">filtered_df</span><span class="p">[</span><span class="s2">&quot;Timestamp_diff&quot;</span><span class="p">])</span> <span class="o">&lt;</span> <span class="n">delta_window</span>
+            <span class="p">][</span><span class="s2">&quot;Timestamp_diff&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+
+            <span class="n">deltas_all</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">q</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="n">w</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">delta_ts</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">deltas_all</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Sergei Kulkov.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
