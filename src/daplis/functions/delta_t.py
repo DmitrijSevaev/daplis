@@ -61,9 +61,9 @@ from matplotlib import pyplot as plt
 from pyarrow import feather as ft
 from tqdm import tqdm
 
-from daplis.functions import calc_diff as cd
-from daplis.functions import unpack as f_up
-from daplis.functions import utils
+from src.daplis.functions import calc_diff as cd
+from src.daplis.functions import unpack as f_up
+from src.daplis.functions import utils
 
 
 def _flatten(input_list: List):
@@ -156,19 +156,19 @@ def _combine_intermediate_feather_files(path: str, skip_data: bool = False):
 
 
 def calculate_and_save_timestamp_differences(
-    path: str,
-    pixels: List[int] | List[List[int]],
-    rewrite: bool,
-    daughterboard_number: str,
-    motherboard_number: str,
-    firmware_version: str,
-    timestamps: int = 512,
-    delta_window: float = 50e3,
-    app_mask: bool = True,
-    include_offset: bool = False,
-    apply_calibration: bool = True,
-    absolute_timestamps: bool = False,
-    correct_pix_address: bool = False,
+        path: str,
+        pixels: List[int] | List[List[int]],
+        rewrite: bool,
+        daughterboard_number: str,
+        motherboard_number: str,
+        firmware_version: str,
+        timestamps: int = 512,
+        delta_window: float = 50e3,
+        app_mask: bool = True,
+        include_offset: bool = False,
+        apply_calibration: bool = True,
+        absolute_timestamps: bool = False,
+        correct_pix_address: bool = False,
 ):
     """Calculate and save timestamp differences into '.feather' file.
 
@@ -403,8 +403,8 @@ def calculate_and_save_timestamp_differences(
 
     # Check, if the file was created
     if (
-        os.path.isfile(path + f"/delta_ts_data/{out_file_name}.feather")
-        is True
+            os.path.isfile(path + f"/delta_ts_data/{out_file_name}.feather")
+            is True
     ):
         print(
             "\n> > > Timestamp differences are saved as"
@@ -417,20 +417,20 @@ def calculate_and_save_timestamp_differences(
 
 
 def calculate_and_save_timestamp_differences_fast(
-    path: str,
-    pixels: List[int] | List[List[int]],
-    rewrite: bool,
-    daughterboard_number: str,
-    motherboard_number: str,
-    firmware_version: str,
-    timestamps: int = 512,
-    delta_window: float = 50e3,
-    cycle_length: float = None,
-    app_mask: bool = True,
-    include_offset: bool = False,
-    apply_calibration: bool = True,
-    absolute_timestamps: bool = False,
-    correct_pix_address: bool = False,
+        path: str,
+        pixels: List[int] | List[List[int]],
+        rewrite: bool,
+        daughterboard_number: str,
+        motherboard_number: str,
+        firmware_version: str,
+        timestamps: int = 512,
+        delta_window: float = 50e3,
+        cycle_length: float = None,
+        app_mask: bool = True,
+        include_offset: bool = False,
+        apply_calibration: bool = True,
+        absolute_timestamps: bool = False,
+        correct_pix_address: bool = False,
 ):
     """Calculate and save timestamp differences into '.feather' file.
 
@@ -629,10 +629,7 @@ def calculate_and_save_timestamp_differences_fast(
     _combine_intermediate_feather_files(path)
 
     # Check, if the file was created
-    if (
-        os.path.isfile(path + f"/delta_ts_data/{out_file_name}.feather")
-        is True
-    ):
+    if (os.path.isfile(path + f"/delta_ts_data/{out_file_name}.feather") is True):
         print(
             "\n> > > Timestamp differences are saved as"
             f"{out_file_name}.feather in "
@@ -644,19 +641,19 @@ def calculate_and_save_timestamp_differences_fast(
 
 
 def calculate_and_save_timestamp_differences_full_sensor(
-    path,
-    pixels: list,
-    rewrite: bool,
-    daughterboard_number: str,
-    motherboard_number1: str,
-    motherboard_number2: str,
-    firmware_version: str,
-    timestamps: int = 512,
-    delta_window: float = 50e3,
-    app_mask: bool = True,
-    include_offset: bool = False,
-    apply_calibration: bool = True,
-    absolute_timestamps: bool = False,
+        path,
+        pixels: list,
+        rewrite: bool,
+        daughterboard_number: str,
+        motherboard_number1: str,
+        motherboard_number2: str,
+        firmware_version: str,
+        timestamps: int = 512,
+        delta_window: float = 50e3,
+        app_mask: bool = True,
+        include_offset: bool = False,
+        apply_calibration: bool = True,
+        absolute_timestamps: bool = False,
 ):  # TODO add option for collecting from more than just two pixels
     # TODO use pixel handling function for modularity (if possible)
     """Calculate and save timestamp differences into '.feather' file.
@@ -875,9 +872,9 @@ def calculate_and_save_timestamp_differences_full_sensor(
 
         if cyc1 > cyc2:
             abs_tmsp_list1.append(abs_tmsp1[cyc1:])
-            abs_tmsp_list2.append(abs_tmsp2[cyc2 : -cyc1 + cyc2])
+            abs_tmsp_list2.append(abs_tmsp2[cyc2: -cyc1 + cyc2])
         else:
-            abs_tmsp_list1.append(abs_tmsp1[cyc1 : -cyc2 + cyc1])
+            abs_tmsp_list1.append(abs_tmsp1[cyc1: -cyc2 + cyc1])
             abs_tmsp_list2.append(abs_tmsp2[cyc2:])
 
         os.chdir("..")
@@ -985,8 +982,8 @@ def calculate_and_save_timestamp_differences_full_sensor(
 
     # Check if the file with the results was created
     if (
-        os.path.isfile(os.path.join(path, f"/delta_ts_data/{feather_file}"))
-        is True
+            os.path.isfile(os.path.join(path, f"/delta_ts_data/{feather_file}"))
+            is True
     ):
         print(
             "\n> > > Timestamp differences are saved as"
@@ -999,20 +996,20 @@ def calculate_and_save_timestamp_differences_full_sensor(
 
 
 def calculate_and_save_timestamp_differences_full_sensor_alt(
-    path,
-    pixels: list,
-    rewrite: bool,
-    daughterboard_number: str,
-    motherboard_number1: str,
-    motherboard_number2: str,
-    firmware_version: str,
-    timestamps: int = 512,
-    delta_window: float = 50e3,
-    threshold: int = 0,
-    app_mask: bool = True,
-    include_offset: bool = False,
-    apply_calibration: bool = True,
-    absolute_timestamps: bool = False,
+        path,
+        pixels: list,
+        rewrite: bool,
+        daughterboard_number: str,
+        motherboard_number1: str,
+        motherboard_number2: str,
+        firmware_version: str,
+        timestamps: int = 512,
+        delta_window: float = 50e3,
+        threshold: int = 0,
+        app_mask: bool = True,
+        include_offset: bool = False,
+        apply_calibration: bool = True,
+        absolute_timestamps: bool = False,
 ):  # TODO add option for collecting from more than just two pixels
     # TODO use pixel handling function for modularity (if possible)
     """Calculate and save timestamp differences into '.feather' file.
@@ -1256,14 +1253,14 @@ def calculate_and_save_timestamp_differences_full_sensor_alt(
                 len(
                     column_data1[cycle_indices1][
                         column_data1[cycle_indices1] > 0
-                    ]
+                        ]
                 )
             )
             pixel_cycle_pop2.append(
                 len(
                     column_data2[cycle_indices2][
                         column_data2[cycle_indices2] > 0
-                    ]
+                        ]
                 )
             )
 
@@ -1284,15 +1281,15 @@ def calculate_and_save_timestamp_differences_full_sensor_alt(
                 abs_tmsp_list1.append(abs_tmsp1[cycle_start_index1:])
                 abs_tmsp_list2.append(
                     abs_tmsp2[
-                        cycle_start_index2 : -cycle_start_index1
-                        + cycle_start_index2
+                    cycle_start_index2: -cycle_start_index1
+                                        + cycle_start_index2
                     ]
                 )
             else:
                 abs_tmsp_list1.append(
                     abs_tmsp1[
-                        cycle_start_index1 : -cycle_start_index2
-                        + cycle_start_index1
+                    cycle_start_index1: -cycle_start_index2
+                                        + cycle_start_index1
                     ]
                 )
                 abs_tmsp_list2.append(abs_tmsp2[cycle_start_index2:])
@@ -1380,8 +1377,8 @@ def calculate_and_save_timestamp_differences_full_sensor_alt(
 
     # Check if the file with the results was created
     if (
-        os.path.isfile(os.path.join(path, f"/delta_ts_data/{feather_file}"))
-        is True
+            os.path.isfile(os.path.join(path, f"/delta_ts_data/{feather_file}"))
+            is True
     ):
         print(
             "\n> > > Timestamp differences are saved as"
@@ -1394,17 +1391,17 @@ def calculate_and_save_timestamp_differences_full_sensor_alt(
 
 
 def collect_and_plot_timestamp_differences(
-    path,
-    pixels,
-    rewrite: bool,
-    ft_file: str = None,
-    range_left: int = -10e3,
-    range_right: int = 10e3,
-    multiplier: int = 1,
-    same_y: bool = False,
-    color: str = "rebeccapurple",
-    correct_pix_address: bool = False,
-    pickle_figure: bool = False,
+        path,
+        pixels,
+        rewrite: bool,
+        ft_file: str = None,
+        range_left: int = -10e3,
+        range_right: int = 10e3,
+        multiplier: int = 1,
+        same_y: bool = False,
+        color: str = "rebeccapurple",
+        correct_pix_address: bool = False,
+        pickle_figure: bool = False,
 ):
     """Collect and plot timestamp differences from a '.feather' file.
 
@@ -1596,7 +1593,7 @@ def collect_and_plot_timestamp_differences(
                 peak_max_pos = np.argmax(n).astype(np.intc)
                 # 2 ns window around peak
                 win = int(1000 / ((range_right - range_left) / 100))
-                peak_max = np.sum(n[peak_max_pos - win : peak_max_pos + win])
+                peak_max = np.sum(n[peak_max_pos - win: peak_max_pos + win])
             except ValueError:
                 peak_max = 0
 
@@ -1662,14 +1659,14 @@ def collect_and_plot_timestamp_differences(
 
 
 def collect_and_plot_timestamp_differences_from_ft_file(
-    ft_file,
-    pixels,
-    rewrite: bool,
-    range_left: int = -10e3,
-    range_right: int = 10e3,
-    multiplier: int = 1,
-    same_y: bool = False,
-    color: str = "rebeccapurple",
+        ft_file,
+        pixels,
+        rewrite: bool,
+        range_left: int = -10e3,
+        range_right: int = 10e3,
+        multiplier: int = 1,
+        same_y: bool = False,
+        color: str = "rebeccapurple",
 ):
     """Collect and plot timestamp differences from a '.feather' file.
 
@@ -1843,7 +1840,7 @@ def collect_and_plot_timestamp_differences_from_ft_file(
                 peak_max_pos = np.argmax(n).astype(np.intc)
                 # 2 ns window around peak
                 win = int(1000 / ((range_right - range_left) / 100))
-                peak_max = np.sum(n[peak_max_pos - win : peak_max_pos + win])
+                peak_max = np.sum(n[peak_max_pos - win: peak_max_pos + win])
             except ValueError:
                 peak_max = 0
 
@@ -1890,14 +1887,14 @@ def collect_and_plot_timestamp_differences_from_ft_file(
 
 
 def collect_and_plot_timestamp_differences_full_sensor(
-    path,
-    pixels,
-    rewrite: bool,
-    range_left: int = -10e3,
-    range_right: int = 10e3,
-    multiplier: int = 1,
-    same_y: bool = False,
-    color: str = "rebeccapurple",
+        path,
+        pixels,
+        rewrite: bool,
+        range_left: int = -10e3,
+        range_right: int = 10e3,
+        multiplier: int = 1,
+        same_y: bool = False,
+        color: str = "rebeccapurple",
 ):
     """Collect and plot timestamp differences from a '.feather' file.
 
@@ -2107,7 +2104,7 @@ def collect_and_plot_timestamp_differences_full_sensor(
                 peak_max_pos = np.argmax(n).astype(np.intc)
                 # 2 ns window around peak
                 win = int(1000 / ((range_right - range_left) / 100))
-                peak_max = np.sum(n[peak_max_pos - win : peak_max_pos + win])
+                peak_max = np.sum(n[peak_max_pos - win: peak_max_pos + win])
             except ValueError:
                 peak_max = 0
 

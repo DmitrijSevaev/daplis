@@ -24,7 +24,7 @@ import numpy as np
 import pandas as pd
 from numpy import ndarray
 
-from daplis.functions import utils
+from src.daplis.functions import utils
 
 
 # TODO remove - deprecated

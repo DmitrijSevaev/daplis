@@ -773,27 +773,18 @@ def load_calibration_data(
 
     # Compensating for TDC nonlinearities
     try:
-        file_TDC = glob.glob(
-            f"*TDC_{daughterboard_number}_{motherboard_number}"
-            f"_{firmware_version}*"
-        )[0]
+        file_TDC = glob.glob(f"*TDC_{daughterboard_number}_{motherboard_number}"f"_{firmware_version}*")[0]
     except IndexError as exc:
         raise FileNotFoundError(
             f"TDC calibration for {daughterboard_number}, "
-            f"{motherboard_number}, and {firmware_version} is not found"
-        ) from exc
+            f"{motherboard_number}, and {firmware_version} is not found") from exc
 
     # Compensating for offset
     if include_offset:
         try:
-            file_offset = glob.glob(
-                f"*Offset_{daughterboard_number}_{motherboard_number}"
-                f"_{firmware_version}*"
-            )[0]
+            file_offset = glob.glob(f"*Offset_{daughterboard_number}_{motherboard_number}"f"_{firmware_version}*")[0]
         except IndexError:
-            raise FileNotFoundError(
-                "No .npy file with offset calibration data was found"
-            )
+            raise FileNotFoundError("No .npy file with offset calibration data was found")
         offset_arr = np.load(file_offset)
 
     # Skipping the first row of TDC bins' numbers
