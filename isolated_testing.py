@@ -420,36 +420,6 @@ def calculate_and_save_timestamp_differences_mp(
     print(output_string)
 
 
-def parallel(path: str, num_of_cores):
-    calculate_and_save_timestamp_differences_mp(
-        path,
-        pixels=[144, 171],
-        rewrite=True,
-        daughterboard_number="NL11",
-        motherboard_number="#33",
-        firmware_version="2212b",
-        timestamps=300,
-        include_offset=False,
-        number_of_cores=num_of_cores,
-    )
-
-
-def sequential(path: str):
-    start = time.time()
-    delta_t.calculate_and_save_timestamp_differences_fast(
-        path,
-        pixels=[144, 171],
-        rewrite=True,
-        daughterboard_number="NL11",
-        motherboard_number="#33",
-        firmware_version="2212b",
-        timestamps=300,
-        include_offset=False,
-    )
-    finish = time.time()
-    print(f"{finish - start} s")
-
-
 def _merge_files(path: str):
     # Find all .feather files in the directory
     feather_files = [path + "/" + f for f in os.listdir(path) if f.endswith(".feather")]
@@ -492,6 +462,17 @@ def compare_results(file1, file2):
     plt.show()
 
 
+def parallel(path: str, num_of_cores, common_args: dict):
+    calculate_and_save_timestamp_differences_mp(path, **common_args, number_of_cores=num_of_cores)
+
+
+def sequential(path: str, common_args: dict):
+    start = time.time()
+    delta_t.calculate_and_save_timestamp_differences_fast(path, **common_args)
+    finish = time.time()
+    print(f"{finish - start} s")
+
+
 if __name__ == "__main__":
     current_directory = Path(__file__).parent
     path = str(current_directory / 'isolated_data')
@@ -502,8 +483,19 @@ if __name__ == "__main__":
     _delete_results(seq_path)
     _delete_results(mp_path)
 
-    sequential(path)
-    parallel(path, 7)
+    # Arguments common to both methods
+    common_args = {
+        "pixels": [144, 171],
+        "rewrite": True,
+        "daughterboard_number": "NL11",
+        "motherboard_number": "#33",
+        "firmware_version": "2212b",
+        "timestamps": 300,
+        "include_offset": False,
+    }
+
+    sequential(path, common_args)
+    parallel(path, 7, common_args)
 
     rename_seq_result(seq_path)
     _merge_files(mp_path)
@@ -512,3 +504,4 @@ if __name__ == "__main__":
     mp_file = mp_path + "/mp.feather"
 
     compare_results(seq_file, mp_file)
+
