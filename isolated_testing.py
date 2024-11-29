@@ -508,7 +508,7 @@ if __name__ == "__main__":
     rename_seq_result(seq_path)
     _merge_files(mp_path)
 
-    file1 = r"/home/dmitrij/FJFI/Daplis/daplis/isolated_data/delta_ts_data/seq.feather"
-    file2 = r"/home/dmitrij/FJFI/Daplis/daplis/isolated_data/delta_ts_data_mp/mp.feather"
+    seq_file = seq_path + "/seq.feather"
+    mp_file = mp_path + "/mp.feather"
 
-    compare_results(file1, file2)
+    compare_results(seq_file, mp_file)
