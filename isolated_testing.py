@@ -512,6 +512,3 @@ if __name__ == "__main__":
     file2 = r"/home/dmitrij/FJFI/Daplis/daplis/isolated_data/delta_ts_data_mp/mp.feather"
 
     compare_results(file1, file2)
-
-    _delete_results(seq_path)
-    _delete_results(mp_path)
