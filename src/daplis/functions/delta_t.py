@@ -51,6 +51,7 @@ import glob
 import os
 import pickle
 import sys
+import time
 from math import ceil
 from typing import List
 from warnings import warn
@@ -559,10 +560,13 @@ def calculate_and_save_timestamp_differences_fast(
             pixels[0] = [pix for pix in pixels[0] if pix not in mask]
             pixels[1] = [pix for pix in pixels[1] if pix not in mask]
 
+    times = []
     for i in tqdm(range(ceil(len(files_all))), desc="Collecting data"):
+        start_time = time.time()
         file = files_all[i]
 
         # Unpack data for the requested pixels into dictionary
+        tmp_time = time.time()
         if not absolute_timestamps:
             data_all = f_up.unpack_binary_data(
                 file,
@@ -583,17 +587,23 @@ def calculate_and_save_timestamp_differences_fast(
                 include_offset,
                 apply_calibration,
             )
+        tmp_end_time = time.time()
+        print("time spent unpacking file: " + str(tmp_end_time - tmp_time) + " seconds")
 
         # If cycle_length is not given manually, estimate from the data
         if cycle_length is None:
             cycle_length = np.max(data_all)
 
+        tmp_time = time.time()
         delta_ts = cd.calculate_differences_2212_fast(
             data_all, pixels, pix_coor, delta_window, cycle_length
         )
+        tmp_end_time = time.time()
+        print("time spent calculating delta ts: " + str(tmp_end_time - tmp_time) + " seconds")
 
         # Save data as a .feather file in a cycle so data is not lost
         # in the case of failure close to the end
+        tmp_time = time.time()
         delta_ts = pd.DataFrame.from_dict(delta_ts, orient="index")
         delta_ts = delta_ts.T
 
@@ -623,10 +633,18 @@ def calculate_and_save_timestamp_differences_fast(
         else:
             # Save as a new feather file
             ft.write_feather(delta_ts, feather_file)
+        tmp_end_time = time.time()
+        print("time spent writing delta ts: " + str(tmp_end_time - tmp_time) + " seconds")
         os.chdir("..")
+        end_time = time.time()
+        times.append(end_time - start_time)
+    print(f"Average time spent per file: {np.mean(times)} seconds")
 
+    tmp_time = time.time()
     # Combine the numbered feather files into a single one
     _combine_intermediate_feather_files(path)
+    tmp_end_time = time.time()
+    print("time spent calculating delta ts: " + str(tmp_end_time - tmp_time) + " seconds")
 
     # Check, if the file was created
     if (os.path.isfile(path + f"/delta_ts_data/{out_file_name}.feather") is True):

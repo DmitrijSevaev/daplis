@@ -497,18 +497,19 @@ if __name__ == "__main__":
     path = str(current_directory / 'isolated_data')
 
     seq_path = os.path.join(path, 'delta_ts_data')
-    mp_path = os.path.join(path, 'delta_ts_data_mp')
+    #mp_path = os.path.join(path, 'delta_ts_data_mp')
 
     _delete_results(seq_path)
-    _delete_results(mp_path)
+    #_delete_results(mp_path)
 
     sequential(path)
-    parallel(path, 7)
+    #parallel(path, 7)
 
     rename_seq_result(seq_path)
-    _merge_files(mp_path)
+    #_merge_files(mp_path)
 
     file1 = r"/home/dmitrij/FJFI/Daplis/daplis/isolated_data/delta_ts_data/seq.feather"
-    file2 = r"/home/dmitrij/FJFI/Daplis/daplis/isolated_data/delta_ts_data_mp/mp.feather"
+    file2 = r"/home/dmitrij/FJFI/Daplis/daplis/isolated_data/merged.feather"
+    #file2 = r"/home/dmitrij/FJFI/Daplis/daplis/isolated_data/delta_ts_data_mp/mp.feather"
 
     compare_results(file1, file2)
