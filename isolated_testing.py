@@ -508,8 +508,10 @@ if __name__ == "__main__":
     rename_seq_result(seq_path)
     #_merge_files(mp_path)
 
-    file1 = r"/home/dmitrij/FJFI/Daplis/daplis/isolated_data/delta_ts_data/seq.feather"
-    file2 = r"/home/dmitrij/FJFI/Daplis/daplis/isolated_data/merged.feather"
+    #file1 = r"/home/dmitrij/FJFI/Daplis/daplis/isolated_data/delta_ts_data/seq.feather" # LINUX
+    #file2 = r"/home/dmitrij/FJFI/Daplis/daplis/isolated_data/merged.feather" # LINUX
+    file1 = r"C:\Users\fintv\Desktop\CAPADS\Daplis\daplis\isolated_data\delta_ts_data\seq.feather" # WINDOWS
+    file2 = r"C:\Users\fintv\Desktop\CAPADS\Daplis\daplis\isolated_data\merged.feather" # WINDOWS
     #file2 = r"/home/dmitrij/FJFI/Daplis/daplis/isolated_data/delta_ts_data_mp/mp.feather"
 
     compare_results(file1, file2)
