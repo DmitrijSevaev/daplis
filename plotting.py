@@ -22,7 +22,10 @@ def plot_per_file_times():
     # Add a title
     plt.title('Average time spent per file on Sunrise nodes')
     # Show the plot
+
+    plt.savefig('time_per_file.png')
     plt.show()
+
 
 
 def plot_total_times():
@@ -52,7 +55,10 @@ def plot_total_times():
     # Add a title
     plt.title('Total time spent processing 40 files (3,1 GB) on Sunrise nodes')
     # Show the plot
+
+    plt.savefig('total_time.png')
     plt.show()
+
 
 
 plot_per_file_times()

@@ -588,7 +588,7 @@ def calculate_and_save_timestamp_differences_fast(
                 apply_calibration,
             )
         tmp_end_time = time.time()
-        print("time spent unpacking file: " + str(tmp_end_time - tmp_time) + " seconds")
+        #print("time spent unpacking file: " + str(tmp_end_time - tmp_time) + " seconds")
 
         # If cycle_length is not given manually, estimate from the data
         if cycle_length is None:
@@ -599,7 +599,7 @@ def calculate_and_save_timestamp_differences_fast(
             data_all, pixels, pix_coor, delta_window, cycle_length
         )
         tmp_end_time = time.time()
-        print("time spent calculating delta ts: " + str(tmp_end_time - tmp_time) + " seconds")
+        #print("time spent calculating delta ts: " + str(tmp_end_time - tmp_time) + " seconds")
 
         # Save data as a .feather file in a cycle so data is not lost
         # in the case of failure close to the end
@@ -634,11 +634,11 @@ def calculate_and_save_timestamp_differences_fast(
             # Save as a new feather file
             ft.write_feather(delta_ts, feather_file)
         tmp_end_time = time.time()
-        print("time spent writing delta ts: " + str(tmp_end_time - tmp_time) + " seconds")
+        #print("time spent writing delta ts: " + str(tmp_end_time - tmp_time) + " seconds")
         os.chdir("..")
         end_time = time.time()
         times.append(end_time - start_time)
-    print(f"Average time spent per file: {np.mean(times)} seconds")
+    #print(f"Average time spent per file: {np.mean(times)} seconds")
 
     tmp_time = time.time()
     # Combine the numbered feather files into a single one
