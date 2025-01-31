@@ -493,25 +493,25 @@ def compare_results(file1, file2):
 
 
 if __name__ == "__main__":
- #   current_directory = Path(__file__).parent
- #   path = str(current_directory / 'isolated_data')
-#
- #   seq_path = os.path.join(path, 'delta_ts_data')
- #   #mp_path = os.path.join(path, 'delta_ts_data_mp')
-#
- #   _delete_results(seq_path)
- #   #_delete_results(mp_path)
-#
- #   sequential(path)
- #   #parallel(path, 7)
-#
- #   rename_seq_result(seq_path)
- #   #_merge_files(mp_path)
-#
-    file1 = r"/home/dmitrij/FJFI/Daplis/daplis/isolated_data/delta_ts_data/400.feather" # LINUX
-    file2 = r"/home/dmitrij/FJFI/Daplis/daplis/isolated_data/merged.feather" # LINUX
-    #file1 = r"C:\Users\fintv\Desktop\CAPADS\Daplis\daplis\isolated_data\delta_ts_data\400.feather" # WINDOWS
-    #file2 = r"C:\Users\fintv\Desktop\CAPADS\Daplis\daplis\isolated_data\merged.feather" # WINDOWS
-    #file2 = r"/home/dmitrij/FJFI/Daplis/daplis/isolated_data/delta_ts_data_mp/mp.feather"
+    current_directory = Path(__file__).parent
+    path = str(current_directory / 'isolated_data')
 
-    compare_results(file1, file2)
+    #   seq_path = os.path.join(path, 'delta_ts_data')
+    mp_path = os.path.join(path, 'delta_ts_data_mp')
+
+    #   _delete_results(seq_path)
+    _delete_results(mp_path)
+
+    #   sequential(path)
+    parallel(path, 10)
+
+    #   rename_seq_result(seq_path)
+    _merge_files(mp_path)
+
+    file1 = r"/home/dmitrij/FJFI/Daplis/daplis/isolated_data/delta_ts_data/400.feather"  # LINUX
+    file2 = r"/home/dmitrij/FJFI/Daplis/daplis/isolated_data/merged.feather"  # LINUX
+    # file1 = r"C:\Users\fintv\Desktop\CAPADS\Daplis\daplis\isolated_data\delta_ts_data\400.feather" # WINDOWS
+    # file2 = r"C:\Users\fintv\Desktop\CAPADS\Daplis\daplis\isolated_data\merged.feather" # WINDOWS
+    # file2 = r"/home/dmitrij/FJFI/Daplis/daplis/isolated_data/delta_ts_data_mp/mp.feather"
+
+    # compare_results(file1, file2)
