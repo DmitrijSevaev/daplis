@@ -466,8 +466,8 @@ def _merge_files(path: str):
 def rename_seq_result(path: str):
     # find the only existing file
     feather_files = [path + "/" + f for f in os.listdir(path) if f.endswith(".feather")]
-    # rename the file to seq.feather
-    os.rename(feather_files[0], path + "/seq.feather")
+    # rename the file to 400.feather
+    os.rename(feather_files[0], path + "/400.feather")
 
 
 def _delete_results(path: str):
@@ -493,25 +493,25 @@ def compare_results(file1, file2):
 
 
 if __name__ == "__main__":
-    current_directory = Path(__file__).parent
-    path = str(current_directory / 'isolated_data')
-
-    seq_path = os.path.join(path, 'delta_ts_data')
-    #mp_path = os.path.join(path, 'delta_ts_data_mp')
-
-    _delete_results(seq_path)
-    #_delete_results(mp_path)
-
-    sequential(path)
-    #parallel(path, 7)
-
-    rename_seq_result(seq_path)
-    #_merge_files(mp_path)
-
-    #file1 = r"/home/dmitrij/FJFI/Daplis/daplis/isolated_data/delta_ts_data/seq.feather" # LINUX
-    #file2 = r"/home/dmitrij/FJFI/Daplis/daplis/isolated_data/merged.feather" # LINUX
-    file1 = r"C:\Users\fintv\Desktop\CAPADS\Daplis\daplis\isolated_data\delta_ts_data\seq.feather" # WINDOWS
-    file2 = r"C:\Users\fintv\Desktop\CAPADS\Daplis\daplis\isolated_data\merged.feather" # WINDOWS
+ #   current_directory = Path(__file__).parent
+ #   path = str(current_directory / 'isolated_data')
+#
+ #   seq_path = os.path.join(path, 'delta_ts_data')
+ #   #mp_path = os.path.join(path, 'delta_ts_data_mp')
+#
+ #   _delete_results(seq_path)
+ #   #_delete_results(mp_path)
+#
+ #   sequential(path)
+ #   #parallel(path, 7)
+#
+ #   rename_seq_result(seq_path)
+ #   #_merge_files(mp_path)
+#
+    file1 = r"/home/dmitrij/FJFI/Daplis/daplis/isolated_data/delta_ts_data/400.feather" # LINUX
+    file2 = r"/home/dmitrij/FJFI/Daplis/daplis/isolated_data/merged.feather" # LINUX
+    #file1 = r"C:\Users\fintv\Desktop\CAPADS\Daplis\daplis\isolated_data\delta_ts_data\400.feather" # WINDOWS
+    #file2 = r"C:\Users\fintv\Desktop\CAPADS\Daplis\daplis\isolated_data\merged.feather" # WINDOWS
     #file2 = r"/home/dmitrij/FJFI/Daplis/daplis/isolated_data/delta_ts_data_mp/mp.feather"
 
     compare_results(file1, file2)
