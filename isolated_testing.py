@@ -496,22 +496,28 @@ if __name__ == "__main__":
     current_directory = Path(__file__).parent
     path = str(current_directory / 'isolated_data')
 
-    #   seq_path = os.path.join(path, 'delta_ts_data')
+    seq_path = os.path.join(path, 'delta_ts_data')
     mp_path = os.path.join(path, 'delta_ts_data_mp')
+    # create delta_ts_data_mp directory if it does not exist
+    if not os.path.exists(mp_path):
+        os.makedirs(mp_path)
 
-    #   _delete_results(seq_path)
-    _delete_results(mp_path)
+    if not os.path.exists(seq_path):
+         os.makedirs(seq_path)
 
-    #   sequential(path)
-    parallel(path, 10)
+    _delete_results(seq_path)
+    #_delete_results(mp_path)
 
-    #   rename_seq_result(seq_path)
-    _merge_files(mp_path)
+    sequential(path)
+    #parallel(path, 10)
 
-    file1 = r"/home/dmitrij/FJFI/Daplis/daplis/isolated_data/delta_ts_data/400.feather"  # LINUX
-    file2 = r"/home/dmitrij/FJFI/Daplis/daplis/isolated_data/merged.feather"  # LINUX
-    # file1 = r"C:\Users\fintv\Desktop\CAPADS\Daplis\daplis\isolated_data\delta_ts_data\400.feather" # WINDOWS
-    # file2 = r"C:\Users\fintv\Desktop\CAPADS\Daplis\daplis\isolated_data\merged.feather" # WINDOWS
+    rename_seq_result(seq_path)
+    #_merge_files(mp_path)
+
+    #file1 = r"/home/dmitrij/FJFI/Daplis/daplis/isolated_data/delta_ts_data/400.feather"  # LINUX
+    #file2 = r"/home/dmitrij/FJFI/Daplis/daplis/isolated_data/merged.feather"  # LINUX
+    file1 = r"C:\Users\fintv\Desktop\CAPADS\Daplis\daplis\isolated_data\merged.feather" # WINDOWS
+    file2 = r"C:\Users\fintv\Desktop\CAPADS\Daplis\daplis\isolated_data\delta_ts_data_mp\mp.feather" # WINDOWS
     # file2 = r"/home/dmitrij/FJFI/Daplis/daplis/isolated_data/delta_ts_data_mp/mp.feather"
 
-    # compare_results(file1, file2)
+    #compare_results(file1, file2)

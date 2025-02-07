@@ -241,7 +241,6 @@ class MpWizard:
 
         return data_all
 
-    #  THIS METHOD IS SLOWER WITH MP TODO
     def _calculate_differences_2212_fast(
             self,
             data: ndarray,
@@ -441,67 +440,47 @@ class MpWizard:
         return (data_cut_1, data_cut_2)
 
     def calculate_and_save_timestamp_differences_mp(self):
+        """Optimized parallelized function that processes each file once and parallelizes pixel pair computations."""
 
         # Find all LinoSPAD2 data files
         files = glob.glob("*.dat")
-
         if not files:
             raise ValueError("No .dat files found in the specified path.")
 
-        self.pixel_pairs = []
-        for i in self.pixels[0]:
-            for j in self.pixels[1]:
-                self.pixel_pairs.append([i, j])
+        # Generate all pixel pairs once
+        self.pixel_pairs = [[i, j] for i in self.pixels[0] for j in self.pixels[1]]
 
         start_time = time.time()
 
-        # Go file by file
-        for file in files:
-            # Unpack the data from the file
-            data = self._unpack_binary_data(file)
+        # Use a single process pool for efficiency
+        with multiprocessing.Pool(processes=self.number_of_cores) as pool:
 
-            # Pre-collect the indices of the acquisition cycles' ends
-            self.cycle_ends = np.argwhere(data[0].T[0] == -2)
-            self.cycle_ends = np.insert(self.cycle_ends, 0, 0)
+            # Go file by file
+            for file in files:
+                # Unpack the data from the file (DO THIS ONCE PER FILE)
+                data = self._unpack_binary_data(file)
 
-            # Prepare the arguments for the child processes:
-            # 'file' and 'pixel_pair' for naming purposes,
-            # chunked data as a tuple of two arrays to work with
-            args = [
-                (
-                    file,
-                    self._chunk_that_data(data, pixel_pair),
-                    pixel_pair,
-                )
-                for pixel_pair in self.pixel_pairs
-            ]
+                # Pre-collect the indices of the acquisition cycles' ends
+                self.cycle_ends = np.argwhere(data[0].T[0] == -2)
+                self.cycle_ends = np.insert(self.cycle_ends, 0, 0)
 
-            # Process the data in parallel
-            time_mp = time.time()
-            with multiprocessing.Pool(min(1, self.number_of_cores, len(self.pixel_pairs))) as pool:
-                pool.map(self._calculate_timestamps_differences, args, )
+                # Prepare args for multiprocessing: only pixel pairs change
+                args = [(file, self._chunk_that_data(data, pixel_pair), pixel_pair) for pixel_pair in self.pixel_pairs]
 
-            print(f"Calculated diff mp {file} in {time.time() - time_mp}")
+                # Process pixel pairs in parallel for this file
+                pool.map(self._calculate_timestamps_differences, args)
+
+                print(f"Processed {file} in parallel")
 
         end_time = time.time()
+        print(f"Parallel processing of {len(files)} files finished in: {round(end_time - start_time, 2)} s")
 
-        print(
-            f"Parallel processing of {len(files)} files "
-            "files (with each writing to its file) finished "
-            f"in: {round(end_time - start_time, 2)} s"
-        )
-
-        # Combine '.feather' files from separate cores
+        # Combine the resulting '.feather' files
         path_to_feathers = os.path.join(self.path, "delta_ts_data_mp")
-
         self._combine_feather_files(path_to_feathers)
 
-        path_output = os.path.join(self.path, "delta_ts_data_mp")
-
         print(
-            "The feather files with the timestamp differences were "
-            f"combined into the 'combined.feather' file in {path_output}"
-        )
+            f"The feather files with the timestamp differences were combined into 'combined.feather' in {path_to_feathers}")
 
 
 def mp():
@@ -531,7 +510,7 @@ def seq():
 
     time_start = time.time()
 
-    path = path = r"C:\Users\fintv\Desktop\CAPADS\Daplis\daplis\isolated_data"
+    path = r"C:\Users\fintv\Desktop\CAPADS\Daplis\daplis\isolated_data"
 
     delta_t.calculate_and_save_timestamp_differences_fast(
         path,

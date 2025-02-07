@@ -47,11 +47,11 @@ from tqdm import tqdm
 
 
 def calibrate_and_save_TDC_data(
-    path: str,
-    daughterboard_number: str,
-    motherboard_number: str,
-    firmware_version: str,
-    timestamps: int = 1000,
+        path: str,
+        daughterboard_number: str,
+        motherboard_number: str,
+        firmware_version: str,
+        timestamps: int = 1000,
 ):
     """Calculate and save calibration data for TDC nonlinearities.
 
@@ -108,10 +108,10 @@ def calibrate_and_save_TDC_data(
 
     # Go over all '.dat' files
     for j, file in enumerate(
-        tqdm(
-            files,
-            desc="Calculating TDC calibration, going through files",
-        )
+            tqdm(
+                files,
+                desc="Calculating TDC calibration, going through files",
+            )
     ):
         if firmware_version == "2208":
             # read data by 32 bit words
@@ -230,11 +230,11 @@ def calibrate_and_save_TDC_data(
 
 
 def unpack_data_for_offset_calibration(
-    path: str,
-    daughterboard_number: str,
-    motherboard_number: str,
-    firmware_version: str,
-    timestamps: int = 1000,
+        path: str,
+        daughterboard_number: str,
+        motherboard_number: str,
+        firmware_version: str,
+        timestamps: int = 1000,
 ):
     """Unpack data for offset calibration from LinoSPAD2 firmware version 2212.
 
@@ -343,7 +343,7 @@ def unpack_data_for_offset_calibration(
     # Path to the calibration data directory
     pix_coordinate_array = np.arange(256).reshape(64, 4)
     path_calibration_data = (
-        os.path.realpath(__file__) + "/../.." + "/params/calibration_data"
+            os.path.realpath(__file__) + "/../.." + "/params/calibration_data"
     )
 
     try:
@@ -372,21 +372,21 @@ def unpack_data_for_offset_calibration(
             continue
 
         data_all[tdc].T[1][ind] = (
-            data_all[tdc].T[1][ind] - data_all[tdc].T[1][ind] % 140
-        ) * 2500 / 140 + cal_matrix[i, (data_all[tdc].T[1][ind] % 140)]
+                                          data_all[tdc].T[1][ind] - data_all[tdc].T[1][ind] % 140
+                                  ) * 2500 / 140 + cal_matrix[i, (data_all[tdc].T[1][ind] % 140)]
 
     return data_all
 
 
 def save_offset_timestamp_differences(
-    path: str,
-    pixels: list,
-    rewrite: bool,
-    daughterboard_number: str,
-    motherboard_number: str,
-    firmware_version: str,
-    timestamps: int = 1000,
-    delta_window: float = 50e3,
+        path: str,
+        pixels: list,
+        rewrite: bool,
+        daughterboard_number: str,
+        motherboard_number: str,
+        firmware_version: str,
+        timestamps: int = 1000,
+        delta_window: float = 50e3,
 ):
     """Calculate and save timestamp differences into '.csv' file.
 
@@ -598,11 +598,11 @@ def save_offset_timestamp_differences(
 
 
 def calculate_and_save_offset_calibration(
-    path: str,
-    daughterboard_number: str,
-    motherboard_number: str,
-    firmware_version: str,
-    timestamps: int = 1000,
+        path: str,
+        daughterboard_number: str,
+        motherboard_number: str,
+        firmware_version: str,
+        timestamps: int = 1000,
 ):
     """Calculate offset calibration and save as .npy.
 
@@ -624,7 +624,7 @@ def calculate_and_save_offset_calibration(
     """
 
     def gauss(x, A, x0, sigma):
-        return A * np.exp(-((x - x0) ** 2) / (2 * sigma**2))
+        return A * np.exp(-((x - x0) ** 2) / (2 * sigma ** 2))
 
     # Calculate delta ts for pixels 0 and 4-255
     save_offset_timestamp_differences(
@@ -737,11 +737,11 @@ def calculate_and_save_offset_calibration(
 
 
 def load_calibration_data(
-    calibration_path: str,
-    daughterboard_number: str,
-    motherboard_number: str,
-    firmware_version: str,
-    include_offset: bool = False,
+        calibration_path: str,
+        daughterboard_number: str,
+        motherboard_number: str,
+        firmware_version: str,
+        include_offset: bool = False,
 ):
     """Load the calibration data.
 
