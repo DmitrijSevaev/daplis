@@ -506,13 +506,13 @@ if __name__ == "__main__":
          os.makedirs(seq_path)
 
     _delete_results(seq_path)
-    #_delete_results(mp_path)
+    _delete_results(mp_path)
 
     sequential(path)
-    #parallel(path, 10)
+    parallel(path, 7)
 
     rename_seq_result(seq_path)
-    #_merge_files(mp_path)
+    _merge_files(mp_path)
 
     #file1 = r"/home/dmitrij/FJFI/Daplis/daplis/isolated_data/delta_ts_data/400.feather"  # LINUX
     #file2 = r"/home/dmitrij/FJFI/Daplis/daplis/isolated_data/merged.feather"  # LINUX

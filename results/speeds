@@ -1,0 +1,59 @@
+================100 files, 100 CPU limit==================
+Sunrise Cluster
+MP code, 1 worker, 100 CPUs per worker = inf
+MP code, 5 workers, 20 CPUs per worker = 14s
+MP code, 10 workers, 10 CPUs per worker = 13s
+MP code, 25 workers, 5 CPUs per worker = 12s
+MP code, 50 workers, 2 CPUs per worker = 14s
+MP code, 100 workers, 1 CPUs per worker = 14s
+SEQ code, 1 worker, 100 CPUs per worker = inf
+SEQ code, 5 workers, 20 CPUs per worker = 37s
+SEQ code, 10 workers, 10 CPUs per worker = 22s
+SEQ code, 25 workers, 5 CPUs per worker = 15s
+SEQ code, 50 workers, 2 CPUs per worker = 12s
+SEQ code, 100 workers, 1 CPUs per worker = 15s
+
+Linux Laptop
+MP code, 7 cores = 77s
+SEQ code, 7 cores = 103s
+
+================1000 files, 100 CPU limit=================
+Sunrise Cluster
+MP code, 1 worker, 100 CPUs per worker = inf
+MP code, 5 workers, 20 CPUs per worker = 150s
+MP code, 10 workers, 10 CPUs per worker = 144s
+MP code, 25 workers, 5 CPUs per worker = 132s
+MP code, 50 workers, 2 CPUs per worker = 356s
+MP code, 100 workers, 1 CPUs per worker = 337
+SEQ code, 1 worker, 100 CPUs per worker = inf
+SEQ code, 5 workers, 20 CPUs per worker = inf
+SEQ code, 10 workers, 10 CPUs per worker = 220s
+SEQ code, 25 workers, 5 CPUs per worker = 129s
+SEQ code, 50 workers, 2 CPUs per worker = 97s
+SEQ code, 100 workers, 1 CPUs per worker = 98s
+
+Linux Laptop
+MP code, 7 cores = 750s
+SEQ code, 7 cores = 1140s
+
+================1000 files, 200 CPU limit=================
+Sunrise Cluster
+MP code, 1 worker, 200 CPUs per worker = inf
+MP code, 5 workers, 40 CPUs per worker = s
+MP code, 10 workers, 20 CPUs per worker = s
+MP code, 25 workers, 8 CPUs per worker = s
+MP code, 50 workers, 4 CPUs per worker = s
+MP code, 100 workers, 2 CPUs per worker = s
+MP code, 200 workers, 1 CPU per worker = s
+SEQ code, 1 worker, 200 CPUs per worker = inf
+SEQ code, 5 workers, 40 CPUs per worker = s
+SEQ code, 10 workers, 20 CPUs per worker = s
+SEQ code, 25 workers, 8 CPUs per worker = s
+SEQ code, 50 workers, 4 CPUs per worker = s
+SEQ code, 100 workers, 2 CPUs per worker = s
+SEQ code, 200 workers, 1 CPU per worker = s
+
+
+
+
+

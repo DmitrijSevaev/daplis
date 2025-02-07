@@ -63,6 +63,6 @@ if __name__ == "__main__":
     # Replace with your directory path
     directory_path = "original_10_files"  # Replace with your directory path
     output_path = "isolated_data"
-    n = 10  # Number of copies to create for each file
+    n = 100  # Number of copies to create for each file
     delete_all_from_directory(output_path)
     copy_all_files_in_directory(directory_path, output_path, n)
