@@ -509,7 +509,7 @@ if __name__ == "__main__":
     _delete_results(mp_path)
 
     sequential(path)
-    parallel(path, 7)
+    parallel(path, 10)
 
     rename_seq_result(seq_path)
     _merge_files(mp_path)

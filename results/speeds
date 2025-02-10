@@ -17,6 +17,10 @@ Linux Laptop
 MP code, 7 cores = 77s
 SEQ code, 7 cores = 103s
 
+Windows PC
+MP code, 10 cores = 27s
+SEQ code, 10 cores = 77s
+
 ================1000 files, 100 CPU limit=================
 Sunrise Cluster
 MP code, 1 worker, 100 CPUs per worker = inf
@@ -36,22 +40,31 @@ Linux Laptop
 MP code, 7 cores = 750s
 SEQ code, 7 cores = 1140s
 
+Windows PC
+MP code, 10 cores = 230s
+SEQ code, 10 cores = 750s
+
 ================1000 files, 200 CPU limit=================
 Sunrise Cluster
 MP code, 1 worker, 200 CPUs per worker = inf
-MP code, 5 workers, 40 CPUs per worker = s
-MP code, 10 workers, 20 CPUs per worker = s
-MP code, 25 workers, 8 CPUs per worker = s
-MP code, 50 workers, 4 CPUs per worker = s
-MP code, 100 workers, 2 CPUs per worker = s
-MP code, 200 workers, 1 CPU per worker = s
+MP code, 5 workers, 40 CPUs per worker = 110s
+MP code, 10 workers, 20 CPUs per worker = 189s
+MP code, 25 workers, 8 CPUs per worker = 119s
+MP code, 50 workers, 4 CPUs per worker = 133s
+MP code, 100 workers, 2 CPUs per worker = 116s
+MP code, 200 workers, 1 CPU per worker = 72s
 SEQ code, 1 worker, 200 CPUs per worker = inf
-SEQ code, 5 workers, 40 CPUs per worker = s
-SEQ code, 10 workers, 20 CPUs per worker = s
-SEQ code, 25 workers, 8 CPUs per worker = s
-SEQ code, 50 workers, 4 CPUs per worker = s
-SEQ code, 100 workers, 2 CPUs per worker = s
-SEQ code, 200 workers, 1 CPU per worker = s
+SEQ code, 5 workers, 40 CPUs per worker = 695s
+SEQ code, 10 workers, 20 CPUs per worker = 510s
+SEQ code, 25 workers, 8 CPUs per worker = 302s
+SEQ code, 50 workers, 4 CPUs per worker = 108s
+SEQ code, 100 workers, 2 CPUs per worker = 69s
+SEQ code, 200 workers, 1 CPU per worker = 103s
+
+Special case:
+MP code, 3 worker, 60 CPUs per worker = 213s
+SEQ code, 3 worker, 60 CPUs per worker = 415s
+
 
 
 
