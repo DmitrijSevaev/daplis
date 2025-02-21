@@ -373,8 +373,8 @@ def calculate_and_save_timestamp_differences_mp(
         if isinstance(data_params.pixels[0], int) and isinstance(data_params.pixels[1], int):
             pixels = [pix for pix in data_params.pixels if pix not in mask]
         else:
-            pixels = [pix for pix in data_params.pixels[0] if pix not in mask]
-            pixels.extend(pix for pix in data_params.pixels[1] if pix not in mask)
+            pixels[0] = [pix for pix in data_params.pixels[0] if pix not in mask]
+            pixels[1] = [pix for pix in data_params.pixels[1] if pix not in mask]
 
     os.chdir(path)
 
@@ -423,7 +423,8 @@ def calculate_and_save_timestamp_differences_mp(
 def parallel(path: str, num_of_cores):
     calculate_and_save_timestamp_differences_mp(
         path,
-        pixels=[144, 171],
+        # pixels=[144, 171],
+        pixels=[[x for x in range(35, 75)], [x for x in range(175, 180)]],
         rewrite=True,
         daughterboard_number="NL11",
         motherboard_number="#33",
@@ -438,13 +439,18 @@ def sequential(path: str):
     start = time.time()
     delta_t.calculate_and_save_timestamp_differences_fast(
         path,
-        pixels=[144, 171],
+        # pixels=[144, 171],
+        pixels=[[x for x in range(35, 75)], [x for x in range(175, 180)]],
         rewrite=True,
         daughterboard_number="NL11",
         motherboard_number="#33",
         firmware_version="2212b",
         timestamps=300,
         include_offset=False,
+        # daughterboard_number="B7d",
+        # motherboard_number="#28",
+        # firmware_version="2212b",
+        # timestamps=500,
     )
     finish = time.time()
     print(f"{finish - start} s")
@@ -466,8 +472,7 @@ def _merge_files(path: str):
 def rename_seq_result(path: str):
     # find the only existing file
     feather_files = [path + "/" + f for f in os.listdir(path) if f.endswith(".feather")]
-    # rename the file to 400.feather
-    os.rename(feather_files[0], path + "/400.feather")
+    os.rename(feather_files[0], path + "/seq.feather")
 
 
 def _delete_results(path: str):
@@ -503,7 +508,7 @@ if __name__ == "__main__":
         os.makedirs(mp_path)
 
     if not os.path.exists(seq_path):
-         os.makedirs(seq_path)
+        os.makedirs(seq_path)
 
     _delete_results(seq_path)
     _delete_results(mp_path)
@@ -514,10 +519,14 @@ if __name__ == "__main__":
     rename_seq_result(seq_path)
     _merge_files(mp_path)
 
-    #file1 = r"/home/dmitrij/FJFI/Daplis/daplis/isolated_data/delta_ts_data/400.feather"  # LINUX
-    #file2 = r"/home/dmitrij/FJFI/Daplis/daplis/isolated_data/merged.feather"  # LINUX
-    file1 = r"C:\Users\fintv\Desktop\CAPADS\Daplis\daplis\isolated_data\merged.feather" # WINDOWS
-    file2 = r"C:\Users\fintv\Desktop\CAPADS\Daplis\daplis\isolated_data\delta_ts_data_mp\mp.feather" # WINDOWS
-    # file2 = r"/home/dmitrij/FJFI/Daplis/daplis/isolated_data/delta_ts_data_mp/mp.feather"
+    # file1 = r"/home/dmitrij/FJFI/Daplis/daplis/isolated_data/delta_ts_data/400.feather"  # LINUX
+    # file2 = r"/home/dmitrij/FJFI/Daplis/daplis/isolated_data/merged.feather"  # LINUX
+    cluster_res = r"C:\Users\fintv\Desktop\CAPADS\Daplis\daplis\isolated_data\merged.feather"  # WINDOWS
+    seq = r"C:\Users\fintv\Desktop\CAPADS\Daplis\daplis\isolated_data\delta_ts_data\seq.feather"  # WINDOWS
+    mp = r"C:\Users\fintv\Desktop\CAPADS\Daplis\daplis\isolated_data\delta_ts_data_mp\mp.feather"  # WINDOWS
 
-    #compare_results(file1, file2)
+    #compare_results(seq, mp)
+
+    seq_data = ft.read_feather(seq)
+    mp_data = ft.read_feather(mp)
+    print(seq_data.equals(mp_data))

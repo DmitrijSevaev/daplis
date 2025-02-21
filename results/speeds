@@ -49,7 +49,7 @@ Sunrise Cluster
 MP code, 1 worker, 200 CPUs per worker = inf
 MP code, 5 workers, 40 CPUs per worker = 110s
 MP code, 10 workers, 20 CPUs per worker = 189s
-MP code, 25 workers, 8 CPUs per worker = 119s
+MP code, 25 workers, 8 CPUs per worker = 83s
 MP code, 50 workers, 4 CPUs per worker = 133s
 MP code, 100 workers, 2 CPUs per worker = 116s
 MP code, 200 workers, 1 CPU per worker = 72s

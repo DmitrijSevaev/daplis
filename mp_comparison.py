@@ -488,8 +488,8 @@ def mp():
 
     mp = MpWizard(
         path,
-        # pixels=[[144], [171, 172]],
-        pixels=[[x for x in range(55, 60)], [x for x in range(175, 180)]],
+        pixels=[[144], [171, 172]],
+        #pixels=[[x for x in range(55, 60)], [x for x in range(175, 180)]],
         # pixels=[[x for x in range(20, 80)], [x for x in range(130, 190)]],
         daughterboard_number="B7d",
         motherboard_number="#28",
@@ -515,18 +515,24 @@ def seq():
     delta_t.calculate_and_save_timestamp_differences_fast(
         path,
         rewrite=True,
-        # pixels=[144, 171],
+        #pixels=[144, 171],
         pixels=[[x for x in range(55, 60)], [x for x in range(175, 180)]],
         # pixels=[[x for x in range(20, 80)], [x for x in range(130, 190)]],
-        daughterboard_number="B7d",
-        motherboard_number="#28",
+        daughterboard_number="NL11",
+        motherboard_number="#33",
         firmware_version="2212b",
-        timestamps=500,
+        timestamps=300,
+        include_offset=False,
+        # daughterboard_number="B7d",
+        # motherboard_number="#28",
+        # firmware_version="2212b",
+        # timestamps=500,
     )
 
     print(f"Finished in {time.time() - time_start}")
 
 
 if __name__ == "__main__":
-    mp()
+    #mp()
     seq()
+
