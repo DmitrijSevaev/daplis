@@ -423,7 +423,7 @@ def calculate_and_save_timestamp_differences_mp(
 def parallel(path: str, num_of_cores):
     calculate_and_save_timestamp_differences_mp(
         path,
-        # pixels=[144, 171],
+        #pixels=[144, 171],
         pixels=[[x for x in range(35, 75)], [x for x in range(175, 180)]],
         rewrite=True,
         daughterboard_number="NL11",
@@ -439,13 +439,13 @@ def sequential(path: str):
     start = time.time()
     delta_t.calculate_and_save_timestamp_differences_fast(
         path,
-        # pixels=[144, 171],
-        pixels=[[x for x in range(35, 75)], [x for x in range(175, 180)]],
+        #pixels=[144, 171],
+        pixels=[[x for x in range(34, 51)], [x for x in range(218, 235)]],
         rewrite=True,
-        daughterboard_number="NL11",
-        motherboard_number="#33",
+        daughterboard_number="B7d",
+        motherboard_number="#28",
         firmware_version="2212b",
-        timestamps=300,
+        timestamps=500,
         include_offset=False,
         # daughterboard_number="B7d",
         # motherboard_number="#28",
@@ -499,7 +499,8 @@ def compare_results(file1, file2):
 
 if __name__ == "__main__":
     current_directory = Path(__file__).parent
-    path = str(current_directory / 'isolated_data')
+    #path = str(current_directory / 'isolated_data')
+    path = r"C:\Users\fintv\Desktop\CAPADS\500t_raw_data"
 
     seq_path = os.path.join(path, 'delta_ts_data')
     mp_path = os.path.join(path, 'delta_ts_data_mp')
@@ -522,11 +523,12 @@ if __name__ == "__main__":
     # file1 = r"/home/dmitrij/FJFI/Daplis/daplis/isolated_data/delta_ts_data/400.feather"  # LINUX
     # file2 = r"/home/dmitrij/FJFI/Daplis/daplis/isolated_data/merged.feather"  # LINUX
     cluster_res = r"C:\Users\fintv\Desktop\CAPADS\Daplis\daplis\isolated_data\merged.feather"  # WINDOWS
-    seq = r"C:\Users\fintv\Desktop\CAPADS\Daplis\daplis\isolated_data\delta_ts_data\seq.feather"  # WINDOWS
+    #seq = r"C:\Users\fintv\Desktop\CAPADS\Daplis\daplis\isolated_data\delta_ts_data\seq.feather"  # WINDOWS
     mp = r"C:\Users\fintv\Desktop\CAPADS\Daplis\daplis\isolated_data\delta_ts_data_mp\mp.feather"  # WINDOWS
 
     #compare_results(seq, mp)
 
-    seq_data = ft.read_feather(seq)
-    mp_data = ft.read_feather(mp)
-    print(seq_data.equals(mp_data))
+    #seq_data = ft.read_feather(seq)
+    #mp_data = ft.read_feather(mp)
+    #print(seq_data.equals(mp_data))
+
