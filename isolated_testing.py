@@ -439,18 +439,22 @@ def sequential(path: str):
     start = time.time()
     delta_t.calculate_and_save_timestamp_differences_fast(
         path,
-        #pixels=[144, 171],
         pixels=[[x for x in range(34, 51)], [x for x in range(218, 235)]],
         rewrite=True,
         daughterboard_number="B7d",
         motherboard_number="#28",
         firmware_version="2212b",
-        timestamps=500,
+        timestamps=700,
         include_offset=False,
-        # daughterboard_number="B7d",
-        # motherboard_number="#28",
-        # firmware_version="2212b",
-        # timestamps=500,
+        #pixels=[144, 171],
+        #rewrite=True,
+        #daughterboard_number="NL11",
+        #motherboard_number="#33",
+        #firmware_version="2212b",
+        #timestamps=300,
+        #include_offset=False,
+
+
     )
     finish = time.time()
     print(f"{finish - start} s")
@@ -500,33 +504,33 @@ def compare_results(file1, file2):
 if __name__ == "__main__":
     current_directory = Path(__file__).parent
     #path = str(current_directory / 'isolated_data')
-    path = r"C:\Users\fintv\Desktop\CAPADS\500t_raw_data"
+    path = r"C:\Users\fintv\Desktop\CAPADS\700t_raw_data"
 
     seq_path = os.path.join(path, 'delta_ts_data')
-    mp_path = os.path.join(path, 'delta_ts_data_mp')
+    #mp_path = os.path.join(path, 'delta_ts_data_mp')
     # create delta_ts_data_mp directory if it does not exist
-    if not os.path.exists(mp_path):
-        os.makedirs(mp_path)
+    #if not os.path.exists(mp_path):
+    #    os.makedirs(mp_path)
 
     if not os.path.exists(seq_path):
         os.makedirs(seq_path)
 
     _delete_results(seq_path)
-    _delete_results(mp_path)
+    #_delete_results(mp_path)
 
     sequential(path)
-    parallel(path, 10)
+    #parallel(path, 10)
 
     rename_seq_result(seq_path)
-    _merge_files(mp_path)
+    #_merge_files(mp_path)
 
     # file1 = r"/home/dmitrij/FJFI/Daplis/daplis/isolated_data/delta_ts_data/400.feather"  # LINUX
     # file2 = r"/home/dmitrij/FJFI/Daplis/daplis/isolated_data/merged.feather"  # LINUX
     cluster_res = r"C:\Users\fintv\Desktop\CAPADS\Daplis\daplis\isolated_data\merged.feather"  # WINDOWS
-    #seq = r"C:\Users\fintv\Desktop\CAPADS\Daplis\daplis\isolated_data\delta_ts_data\seq.feather"  # WINDOWS
-    mp = r"C:\Users\fintv\Desktop\CAPADS\Daplis\daplis\isolated_data\delta_ts_data_mp\mp.feather"  # WINDOWS
+    seq = r"C:\Users\fintv\Desktop\CAPADS\Daplis\daplis\isolated_data\delta_ts_data\seq.feather"  # WINDOWS
+    #mp = r"C:\Users\fintv\Desktop\CAPADS\Daplis\daplis\isolated_data\delta_ts_data_mp\mp.feather"  # WINDOWS
 
-    #compare_results(seq, mp)
+    #compare_results(seq, cluster_res)
 
     #seq_data = ft.read_feather(seq)
     #mp_data = ft.read_feather(mp)
